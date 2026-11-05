@@ -1,0 +1,1 @@
+export default function Page(){return <div className="container max-w-3xl pb-24 pt-40"><h1 className="serif text-6xl">Política de Privacidade</h1><p className="prose mt-8">Documento provisório para ambiente de demonstração. O texto jurídico definitivo deverá ser validado antes da publicação.</p></div>}
