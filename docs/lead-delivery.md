@@ -10,12 +10,16 @@
 6. O resultado e a duração são gravados em `lead_delivery_attempts`.
 7. O painel `/admin/leads` apresenta a situação e o histórico.
 
+Desde a Fase 6.4D, cada lead tem **origem** (`MAISON_SITE` ou `BROKER_SITE`, resolvida pelo Host no servidor) e, para sites de corretores, **estado de atribuição** independente da entrega. Detalhes em `docs/broker-leads.md`.
+
 ## Situações
 
 - `DELIVERED`: resposta HTTP de sucesso do Vista.
 - `MOCKED`: fluxo validado e persistido sem chamada externa.
 - `FAILED`: falha definitiva, como HTTP 4xx. Pode ser reenviada por administrador após análise.
-- `UNKNOWN`: timeout, rede, HTTP 5xx ou resposta inválida. Não pode ser reenviada até reconciliação manual no Vista.
+- `UNKNOWN`: timeout, rede, HTTP 5xx, resposta inválida ou HTTP 2xx sem `Codigo`/confirmação. Não pode ser reenviada até reconciliação manual no Vista: no detalhe do lead, **Consta no Vista** (vira `DELIVERED`) ou **Não consta** (vira `FAILED` e libera nova tentativa). Ação auditada.
+
+A resposta de sucesso real do Vista (`{"status":200,"message":"Ok.","Codigo":…,"Corretor":…}`) agora é lida corretamente: `Codigo` vira a referência do lead e `Corretor` é guardado como informação. Avisos em `message_integration` não indicam falha. A nova tentativa reserva o lead de forma atômica (`FAILED → PENDING`), sem envios duplicados por clique repetido.
 - `PENDING`: registro criado antes da tentativa.
 
 ## Proteções

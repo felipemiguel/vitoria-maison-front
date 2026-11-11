@@ -15,6 +15,8 @@
     { "idx": 10, "version": "7", "when": 1794355200000, "tag": "0010_rbac_user_management", "breakpoints": true },
     { "idx": 11, "version": "7", "when": 1794441600000, "tag": "0011_broker_sites_foundation", "breakpoints": true },
     { "idx": 12, "version": "7", "when": 1794528000000, "tag": "0012_media_assets", "breakpoints": true },
-    { "idx": 13, "version": "7", "when": 1794614400000, "tag": "0013_broker_site_editor", "breakpoints": true }
+    { "idx": 13, "version": "7", "when": 1794614400000, "tag": "0013_broker_site_editor", "breakpoints": true },
+    { "idx": 14, "version": "7", "when": 1794700800000, "tag": "0014_broker_leads", "breakpoints": true },
+    { "idx": 15, "version": "7", "when": 1794787200000, "tag": "0015_backfill_broker_leads", "breakpoints": true }
   ]
 }

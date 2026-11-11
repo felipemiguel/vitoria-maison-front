@@ -15,6 +15,8 @@ export const ADMIN_NAVIGATION: AdminNavItem[] = [
   { href: "/admin/usuarios", label: "Usuários", icon: "users", permission: "users:read" },
   { href: "/admin/sites-corretores", label: "Sites de corretores", icon: "brokerSites", permission: "broker-site:manage-all" },
   { href: "/admin/meu-site", label: "Meu site", icon: "mySite", permission: "broker-site:read-own" },
+  // Leads do próprio site (escopo resolvido na página pela sessão).
+  { href: "/admin/meu-site/leads", label: "Meus leads", icon: "leads", permission: "leads:read-own" },
   { href: "/admin/minha-conta", label: "Minha conta", icon: "account", permission: "account:manage-own" },
 ];
 

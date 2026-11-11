@@ -24,7 +24,7 @@ describe("matriz de permissões", () => {
 
   it("BROKER só gerencia a própria conta: não importa imóveis nem vê leads gerais", () => {
     const broker = user("BROKER");
-    expect([...effectivePermissions(broker)].sort()).toEqual(["account:manage-own", "broker-profile:read-own", "broker-profile:update-own", "broker-site:create-own", "broker-site:read-own", "broker-site:submit-review", "broker-site:update-own"]);
+    expect([...effectivePermissions(broker)].sort()).toEqual(["account:manage-own", "broker-profile:read-own", "broker-profile:update-own", "broker-site:create-own", "broker-site:read-own", "broker-site:submit-review", "broker-site:update-own", "leads:read-own"]);
     expect(hasPermission(broker, "leads:manage")).toBe(false);
     expect(hasPermission(broker, "broker-site:manage-all")).toBe(false);
     expect(hasPermission(broker, "properties:import")).toBe(false);
@@ -65,7 +65,8 @@ describe("navegação por permissões", () => {
     expect(hrefs("ADMIN")).toContain("/admin/usuarios");
     expect(hrefs("MANAGER")).not.toContain("/admin/usuarios");
     expect(hrefs("MANAGER")).toContain("/admin/leads");
-    expect(hrefs("BROKER")).toEqual(["/admin/meu-site", "/admin/minha-conta"]);
+    expect(hrefs("BROKER")).toEqual(["/admin/meu-site", "/admin/meu-site/leads", "/admin/minha-conta"]);
+    expect(hrefs("MANAGER")).not.toContain("/admin/meu-site/leads");
     expect(hrefs("ADMIN")).toContain("/admin/sites-corretores");
     expect(hrefs("ADMIN")).not.toContain("/admin/meu-site");
     expect(hrefs("MANAGER")).not.toContain("/admin/sites-corretores");

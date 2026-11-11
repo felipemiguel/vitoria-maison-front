@@ -216,6 +216,9 @@ export const adminBulkImports = pgTable("admin_bulk_imports", {
   index("admin_bulk_imports_admin_idx").on(table.adminUserId, table.startedAt),
 ]);
 
+export type LeadSource = "MAISON_SITE" | "BROKER_SITE";
+export type LeadAssignmentStatus = "NOT_APPLICABLE" | "PENDING" | "CONFIRMED" | "MISMATCH" | "UNVERIFIED";
+
 export const leadSubmissions = pgTable("lead_submissions", {
   id: uuid("id").primaryKey().defaultRandom(),
   type: leadTypeEnum("type").notNull(),
@@ -229,6 +232,7 @@ export const leadSubmissions = pgTable("lead_submissions", {
   sourcePage: varchar("source_page", { length: 300 }).notNull(),
   deliveryStatus: leadDeliveryStatusEnum("delivery_status").notNull().default("PENDING"),
   attempts: integer("attempts").notNull().default(0),
+  vistaReference: varchar("vista_reference", { length: 200 }),
   lastErrorCode: varchar("last_error_code", { length: 80 }),
   submissionKey: varchar("submission_key", { length: 100 }).notNull(),
   deduplicationHash: varchar("deduplication_hash", { length: 64 }).notNull(),
@@ -236,8 +240,21 @@ export const leadSubmissions = pgTable("lead_submissions", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   sentAt: timestamp("sent_at", { withTimezone: true }),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  source: varchar("source", { length: 20 }).$type<LeadSource>().notNull().default("MAISON_SITE"),
+  brokerSiteId: uuid("broker_site_id").references(() => brokerSites.id, { onDelete: "set null" }),
+  brokerUserId: uuid("broker_user_id").references(() => adminUsers.id, { onDelete: "set null" }),
+  sourceHostname: varchar("source_hostname", { length: 253 }),
+  sourcePath: varchar("source_path", { length: 300 }),
+  vistaBrokerCodeRequested: varchar("vista_broker_code_requested", { length: 40 }),
+  vistaBrokerCodeReturned: varchar("vista_broker_code_returned", { length: 40 }),
+  assignmentStatus: varchar("assignment_status", { length: 20 }).$type<LeadAssignmentStatus>().notNull().default("NOT_APPLICABLE"),
+  assignmentCheckedAt: timestamp("assignment_checked_at", { withTimezone: true }),
+  assignmentCheckedBy: uuid("assignment_checked_by").references(() => adminUsers.id, { onDelete: "set null" }),
 }, (table) => [
   uniqueIndex("lead_submissions_submission_key_unique").on(table.submissionKey),
+  index("lead_submissions_broker_site_idx").on(table.brokerSiteId, table.createdAt),
+  index("lead_submissions_broker_user_idx").on(table.brokerUserId, table.createdAt),
+  index("lead_submissions_assignment_idx").on(table.assignmentStatus, table.createdAt),
   index("lead_submissions_created_idx").on(table.createdAt),
   index("lead_submissions_status_idx").on(table.deliveryStatus, table.createdAt),
   index("lead_submissions_property_idx").on(table.propertyId, table.createdAt),
@@ -252,6 +269,8 @@ export const leadDeliveryAttempts = pgTable("lead_delivery_attempts", {
   status: leadAttemptStatusEnum("status").notNull(),
   errorCode: varchar("error_code", { length: 80 }),
   durationMs: integer("duration_ms").notNull(),
+  vistaReference: varchar("vista_reference", { length: 200 }),
+  vistaBrokerCodeReturned: varchar("vista_broker_code_returned", { length: 40 }),
 }, (table) => [index("lead_delivery_attempts_lead_idx").on(table.leadSubmissionId, table.attemptedAt)]);
 
 export type CuratedPropertyRow = typeof curatedProperties.$inferSelect;

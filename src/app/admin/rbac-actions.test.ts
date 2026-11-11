@@ -159,3 +159,30 @@ describe("editor do corretor e revisão (6.4C)", () => {
     expect(await review.setVistaCodeAction({}, form({ profileId: uuid, siteId: uuid, vistaBrokerCode: "1" }))).toEqual({ error: FORBIDDEN });
   });
 });
+
+describe("leads por corretor (6.4D)", () => {
+  it("BROKER não reenvia, não reconcilia nem confere atribuição de leads", async () => {
+    as("BROKER");
+    const leads = await import("./(protected)/leads/actions");
+    expect(await leads.retryLeadAction({}, form({ id: uuid }))).toEqual({ error: FORBIDDEN });
+    expect(await leads.reconcileLeadAction({}, form({ id: uuid, outcome: "DELIVERED", vistaReference: "" }))).toEqual({ error: FORBIDDEN });
+    expect(await leads.checkLeadAssignmentAction({}, form({ id: uuid, outcome: "CONFIRMED", observedCode: "" }))).toEqual({ error: FORBIDDEN });
+  });
+
+  it("MANAGER sem BROKER não abre Meus leads; BROKER não abre a lista global de leads", async () => {
+    as("MANAGER");
+    const mine = await import("./(protected)/meu-site/leads/page");
+    expect(await digest(mine.default({ searchParams: Promise.resolve({}) }))).toContain("/admin/acesso-negado");
+    as("BROKER");
+    const global = await import("./(protected)/leads/page");
+    expect(await digest(global.default({ searchParams: Promise.resolve({}) }))).toContain("/admin/acesso-negado");
+  });
+
+  it("reconciliação exige mesma origem (CSRF)", async () => {
+    as("ADMIN");
+    state.origin = "https://atacante.test";
+    const leads = await import("./(protected)/leads/actions");
+    expect((await leads.reconcileLeadAction({}, form({ id: uuid, outcome: "DELIVERED", vistaReference: "" }))).error).toMatch(/Requisição inválida/);
+  });
+});
+

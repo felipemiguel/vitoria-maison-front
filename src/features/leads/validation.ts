@@ -6,7 +6,8 @@ export const leadInputSchema=z.object({
   name:z.string().trim().min(2,"Informe seu nome.").max(160),
   email:optionalText(320).pipe(z.email("Informe um e-mail válido.").optional()),
   phone:optionalText(40).refine((value)=>!value||/^\+?[\d\s().-]+$/.test(value)&&value.replace(/\D/g,"").length>=10&&value.replace(/\D/g,"").length<=15,"Informe um telefone válido com DDD."),
-  message:z.string().trim().min(3,"Informe uma mensagem.").max(2_000),
+  // Opcional: vazio recebe uma mensagem padrão no servidor (o Vista exige "mensagem").
+  message:z.string().trim().max(2_000).optional().transform((value)=>value||undefined).refine((value)=>!value||value.length>=3,"A mensagem precisa ter pelo menos 3 caracteres."),
   propertyId:z.string().uuid("Referência de imóvel inválida.").optional(),
   vehicle:z.string().trim().max(200).optional().transform((value)=>value||undefined),
   sourcePage:z.string().trim().min(1).max(300).regex(/^\/[a-z0-9/_?=&.%~-]*$/i,"Origem inválida."),

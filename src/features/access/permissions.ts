@@ -20,6 +20,8 @@ export const PERMISSIONS = [
   "broker-profile:read-own", "broker-profile:update-own",
   "broker-site:read-own", "broker-site:create-own", "broker-site:update-own", "broker-site:submit-review",
   "broker-site:manage-all",
+  // Leads do próprio site (escopo resolvido da sessão: site E usuário).
+  "leads:read-own",
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 
@@ -32,6 +34,7 @@ const USER_MANAGEMENT: Permission[] = ["users:read", "users:create", "users:upda
 const BROKER_OWN: Permission[] = [
   "broker-profile:read-own", "broker-profile:update-own",
   "broker-site:read-own", "broker-site:create-own", "broker-site:update-own", "broker-site:submit-review",
+  "leads:read-own",
 ];
 
 export const ROLE_PERMISSIONS: Record<RoleCode, readonly Permission[]> = {

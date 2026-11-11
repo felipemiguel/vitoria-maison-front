@@ -152,7 +152,9 @@ BROKER_SITES_INDEXING_ENABLED=false             # home dos sites publicados inde
 
 O corretor configura tudo em **Meu site** (perfil, foto, textos da página, imagem de apresentação, imóveis da Maison, até 6 destaques, ordem e prévia completa) e solicita a publicação quando a completude chega a 100%. O ADMIN revisa em **Sites de corretores**: verifica o CRECI, define o código Vista, aprova, devolve com justificativa, suspende ou reativa (`docs/broker-site-editor.md`, `docs/broker-site-publication.md`).
 
-Local: `BROKER_SITES_ENABLED=true BROKER_SITES_BASE_DOMAIN=maison.lvh.me npm run dev` e abra `http://ana.maison.lvh.me:3000`. Detalhes, segurança e pendências de DNS em `docs/broker-sites-foundation.md`.
+Os formulários dos sites de corretores geram leads vinculados ao corretor de origem, resolvido no servidor pelo hostname, com o imóvel validado na seleção do site. O corretor vê os próprios leads em **Meu site → Leads**; o ADMIN acompanha origem, entrega e atribuição em **Leads**. A atribuição no Vista permanece "não verificada" até o contrato ser confirmado. Flags: `BROKER_LEADS_ENABLED`, `BROKER_VISTA_ASSIGNMENT_ENABLED`. Ver `docs/broker-leads.md`, `docs/vista-broker-leads.md` e `docs/broker-sites-production.md`.
+
+Local: `BROKER_SITES_ENABLED=true BROKER_SITES_BASE_DOMAIN=maison.lvh.me BROKER_LEADS_ENABLED=true npm run dev` e abra `http://ana.maison.lvh.me:3000`. Detalhes, segurança e pendências de DNS em `docs/broker-sites-foundation.md`.
 
 Testes de integração com PostgreSQL (incluindo concorrência do último ADMIN):
 

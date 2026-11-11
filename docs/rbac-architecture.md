@@ -57,6 +57,8 @@ As permissões `broker-*:*-own` exigem também **propriedade do recurso**: o don
 | Meu site: perfil profissional | `saveOwnProfileAction` | `broker-profile:update-own` |
 | Meu site: criar, editar, enviar para revisão, prévia | actions + páginas | `broker-site:create-own` / `update-own` / `submit-review` / `read-own` + propriedade |
 | Meu site: seleção, destaques e ordem dos imóveis, imagem de apresentação | `addPropertiesAction`, `manageSelectionAction`, `uploadHeroAction` | `broker-site:update-own` + propriedade |
+| Meu site → Leads: leads do próprio site (escopo site + usuário da sessão) | `/admin/meu-site/leads` | `broker-site:read-own` + `leads:read-own` (BROKER) |
+| Leads: reconciliar entrega e conferir atribuição | `reconcileLeadAction`, `checkLeadAssignmentAction` | `leads:manage` |
 | Sites de corretores: listar, revisar, aprovar, devolver, suspender, reativar, prévia, verificar CRECI, código Vista | `/admin/sites-corretores` + actions | `broker-site:manage-all` |
 
 Comandos CLI (`npm run maison:*`, `vista:*`, `admin:create`) rodam no servidor com acesso direto ao banco, fora do painel, e não passam pelo RBAC. O acesso a eles é controlado pela infraestrutura.

@@ -1,6 +1,8 @@
 # Schema PostgreSQL
 
-Migrations: `0000_initial_backend` a `0013_broker_site_editor`.
+Migrations: `0000_initial_backend` a `0015_backfill_broker_leads`.
+
+`0014_broker_leads` estende `lead_submissions` com origem (`source`, `broker_site_id`, `broker_user_id`, `source_hostname`, `source_path`), atribuição (`vista_broker_code_requested`, `vista_broker_code_returned`, `assignment_status`, `assignment_checked_at/by`), `CHECK` de consistência e gatilho que torna a origem imutável; `lead_delivery_attempts` ganha `vista_reference` e `vista_broker_code_returned`. `0003` revoga aprovações legadas; `0004` adiciona autenticação e situação da sincronização; `0005` adiciona auditoria administrativa e versão otimista de coleções; `0006` registra lotes idempotentes de importação.
 
 ## curated_properties
 
