@@ -1,0 +1,9 @@
+import Link from "next/link";
+import { listPublicCollections } from "@/features/collections/public-collection-service";
+import { propertyRepository } from "@/features/properties/services/property-service";
+import { buildPageMetadata } from "@/features/seo/metadata";
+import { isCollectionIndexable } from "@/features/seo/indexing";
+export const dynamic="force-dynamic";
+/** Indexável somente quando existe ao menos uma coleção publicada com imóveis elegíveis. */
+export async function generateMetadata(){const [collections,counts]=await Promise.all([listPublicCollections(),propertyRepository.countEligibleByCollection()]);return buildPageMetadata({title:"Coleções especiais",description:"Curadorias temáticas da Vitória Maison: seleções de imóveis em São Paulo organizadas pela nossa equipe.",path:"/colecoes",index:collections.some(item=>isCollectionIndexable(counts.get(item.slug)??0))})}
+export default async function Page(){const collections=await listPublicCollections();return <><header className="bg-[#66142e] pb-20 pt-40 text-white"><div className="container"><p className="text-xs uppercase tracking-[.2em] text-white/60">Curadoria</p><h1 className="serif mt-4 text-7xl md:text-9xl">Coleções especiais</h1></div></header><section className="section"><div className="container grid gap-px bg-[#e6ddd6] md:grid-cols-2">{collections.map((item,i)=><Link href={`/colecoes/${item.slug}`} className="group bg-[#f8f6f2] p-9 md:p-14" key={item.slug}><span className="text-xs text-[#66142e]">{String(i+1).padStart(2,"0")}</span><h2 className="serif mt-12 text-4xl md:text-5xl">{item.name}</h2>{item.description&&<p className="mt-4 text-[#69635f]">{item.description}</p>}<p className="mt-5 text-sm uppercase tracking-[.12em] text-[#69635f]">Explorar coleção →</p></Link>)}</div>{collections.length===0&&<p className="py-20 text-center text-[#69635f]">Novas coleções serão publicadas em breve.</p>}</section></>}

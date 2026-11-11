@@ -1,14 +1,14 @@
 # Integração futura com Vista CRM
 
-## Limite desta etapa
+## Estado atual
 
-Nenhuma chamada real ao Vista foi implementada. Endpoints, nomes de campos e capacidades precisam ser validados na documentação e na conta contratada antes do desenvolvimento do adaptador.
+A PoC de leitura está implementada em `src/integrations/vista`, mas o frontend público continua usando mocks. A execução real depende das credenciais locais e está documentada em `docs/vista-poc-report.md`.
 
 ## Modelo de domínio
 
 `Property` separa `commercial`, `location`, `editorial` e `curation`. O adaptador Vista deverá mapear identificador externo, finalidade, tipo, preço, área, dormitórios, suítes, banheiros, vagas, localização pública permitida e disponibilidade. Textos editoriais, ordem de destaque e coleções permanecem sob gestão Maison.
 
-## Pontos a validar
+## Pontos ainda pendentes na conta real
 
 - Endpoints oficiais de listagem, detalhe e atualização incremental.
 - Convenções e códigos de tipo/finalidade.
@@ -17,7 +17,7 @@ Nenhuma chamada real ao Vista foi implementada. Endpoints, nomes de campos e cap
 - Formato, estabilidade, dimensões e licenças das URLs de imagem.
 - Possibilidade de obter data de alteração para sincronização incremental.
 
-## Estratégia proposta
+## Estratégia proposta após a PoC
 
 Criar `VistaPropertyRepository` implementando a interface existente. Credenciais ficam exclusivamente no servidor. Respostas normalizadas podem usar cache do Next com revalidação e invalidação sob demanda, conforme capacidades confirmadas. Falhas de uma imagem não devem invalidar o imóvel; imagens devem ser normalizadas e servidas com `next/image`.
 

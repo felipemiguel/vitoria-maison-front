@@ -2,3 +2,12 @@
 
 :root { --bg:#f8f6f2; --surface:#fff; --muted:#efefef; --wine:#66142e; --wine-dark:#4d0a20; --ink:#181817; --sub:#69635f; --line:#e6ddd6; --accent:#d3a865; }
 *{box-sizing:border-box} html{scroll-behavior:smooth} body{margin:0;background:var(--bg);color:var(--ink);font-family:Arial,Helvetica,sans-serif} a{text-decoration:none;color:inherit} button,input,select,textarea{font:inherit}.serif{font-family:Georgia,"Times New Roman",serif}.container{width:min(100% - 40px,1360px);margin-inline:auto}.eyebrow{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--wine);font-weight:700}.display{font-size:clamp(44px,6.3vw,96px);line-height:.91;font-weight:400;letter-spacing:-.045em}.section-title{font-size:clamp(37px,4.2vw,64px);line-height:1;font-weight:400;letter-spacing:-.035em}.section{padding:110px 0}.link-line{display:inline-flex;align-items:center;gap:10px;border-bottom:1px solid currentColor;padding-bottom:6px;font-size:13px;text-transform:uppercase;letter-spacing:.12em}.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:50px;padding:0 24px;border:1px solid var(--wine);background:var(--wine);color:white;text-transform:uppercase;letter-spacing:.11em;font-size:12px;cursor:pointer;transition:.25s}.btn:hover{background:var(--wine-dark);transform:translateY(-1px)}.btn-outline{background:transparent;color:var(--wine)}.btn-outline:hover{color:white}.image-zoom{overflow:hidden}.image-zoom img{background:#e9e3dd;transition:transform .7s cubic-bezier(.2,.7,.2,1)}.image-zoom:hover img{transform:scale(1.025)}.focusable:focus-visible,a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--wine);outline-offset:3px}.prose{color:var(--sub);line-height:1.75;font-size:16px}@media(max-width:767px){.container{width:min(100% - 28px,1360px)}.section{padding:72px 0}.display{font-size:50px}.section-title{font-size:40px}}@media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+/*
+ * Painel: a regra global `a{color:inherit}` (fora de @layer) vence as classes utilitárias do Tailwind,
+ * então links com `text-white`/`text-[#66142e]` perdiam a cor. No painel, os links voltam a respeitar
+ * as classes (revert-layer). Botões `.btn` (prévia dos sites de corretores) mantêm o estilo próprio.
+ * O site público não é afetado.
+ */
+.admin-shell a:not(.btn) { color: revert-layer; }
+
