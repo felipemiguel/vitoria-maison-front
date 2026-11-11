@@ -1,0 +1,11 @@
+import { describe,expect,it,vi } from "vitest";
+import type { DrizzleLeadStore } from "./drizzle-lead-store";
+import { LeadSubmissionService } from "./lead-submission-service";
+import type { LeadProvider } from "./types";
+const input={type:"PROPERTY_INTEREST",name:"Maria Silva",email:"maria@example.com",phone:"",message:"Interesse",propertyId:"00000000-0000-4000-8000-000000000031",sourcePage:"/imoveis/apartamento",submissionKey:"00000000-0000-4000-8000-000000000001",website:""};
+function setup(published=true,result:{status:"MOCKED"|"DELIVERED"|"FAILED"|"UNKNOWN";errorCode?:string}={status:"MOCKED"}){const store={resolvePublishedProperty:vi.fn(async()=>published?{id:input.propertyId,vistaCode:"31",title:null,sourceTitle:"Apartamento"}:null),create:vi.fn(async()=>({id:"00000000-0000-4000-8000-000000000099",status:"PENDING",created:true})),recordDelivery:vi.fn(async()=>undefined)};const provider:LeadProvider={sendLead:vi.fn(async()=>result)};return {store,provider,service:new LeadSubmissionService(store as unknown as DrizzleLeadStore,provider,"test-secret",()=>new Date("2026-11-08T12:00:00Z"))}}
+describe("LeadSubmissionService",()=>{
+  it("resolve o código Vista no servidor e registra antes de entregar",async()=>{const {service,store,provider}=setup();const response=await service.submit(input,"session-1");expect(response.status).toBe("MOCKED");expect(store.create).toHaveBeenCalledWith(expect.objectContaining({propertyVistaCode:"31"}),expect.any(Date));expect(provider.sendLead).toHaveBeenCalledWith(expect.objectContaining({propertyVistaCode:"31"}));expect(store.recordDelivery).toHaveBeenCalled()});
+  it("recusa imóvel inexistente ou fora do catálogo público",async()=>{const {service,store,provider}=setup(false);await expect(service.submit(input,"session-1")).rejects.toThrow(/não está disponível/);expect(store.create).not.toHaveBeenCalled();expect(provider.sendLead).not.toHaveBeenCalled()});
+  it("informa entrega pendente sem afirmar sucesso",async()=>{const {service}=setup(true,{status:"UNKNOWN",errorCode:"TIMEOUT"});const response=await service.submit(input,"session-1");expect(response.status).toBe("UNKNOWN");expect(response.message).toMatch(/aguardando confirmação/)});
+});
