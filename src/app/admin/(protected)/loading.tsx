@@ -1,0 +1,2 @@
+import { AdminLoadingScreen } from "@/components/admin/loading-overlay";
+export default function AdminLoading(){return <><AdminLoadingScreen/><div className="mx-auto max-w-[1400px] animate-pulse space-y-5"><div className="h-8 w-52 rounded bg-[#e4dcd5]"/><div className="grid gap-4 sm:grid-cols-3"><div className="h-28 rounded-xl bg-[#e4dcd5]"/><div className="h-28 rounded-xl bg-[#e4dcd5]"/><div className="h-28 rounded-xl bg-[#e4dcd5]"/></div><div className="h-72 rounded-xl bg-[#e4dcd5]"/></div></>}

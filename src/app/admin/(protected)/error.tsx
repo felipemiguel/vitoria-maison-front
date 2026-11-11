@@ -1,0 +1,2 @@
+"use client";
+export default function AdminError({reset}:{error:Error;reset:()=>void}){return <div className="mx-auto max-w-xl rounded-xl border border-red-200 bg-white p-8 text-center"><h2 className="text-lg font-semibold">Não foi possível carregar esta área</h2><p className="mt-2 text-sm text-[#746c67]">Verifique a conexão e tente novamente. Nenhum dado interno foi exibido.</p><button onClick={reset} className="mt-5 rounded-lg bg-[#66142e] px-4 py-2 text-sm font-semibold text-white">Tentar novamente</button></div>}

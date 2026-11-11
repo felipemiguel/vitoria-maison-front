@@ -1,0 +1,7 @@
+"use client";
+import { LoadingOverlay } from "@/components/admin/loading-overlay";
+import { useActionState, useRef, useState } from "react";
+import { retryLeadAction, type LeadRetryState } from "@/app/admin/(protected)/leads/actions";
+import { AdminActionFeedback } from "./admin-action-feedback";
+import { AdminConfirmDialog } from "./admin-confirm-dialog";
+export function LeadRetryForm({id}:{id:string}){const [state,action,pending]=useActionState(retryLeadAction,{} as LeadRetryState);const [open,setOpen]=useState(false);const formRef=useRef<HTMLFormElement>(null);const confirmed=useRef(false);return <form ref={formRef} action={action} onSubmit={(event)=>{if(confirmed.current){confirmed.current=false;return}event.preventDefault();setOpen(true)}}><LoadingOverlay show={pending} label="Reenviando lead…"/><input type="hidden" name="id" value={id}/><button disabled={pending} className="rounded-lg bg-[#66142e] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">{pending?"Tentando novamente…":"Tentar entrega novamente"}</button><AdminActionFeedback state={state}/><AdminConfirmDialog open={open} title="Tentar entregar novamente?" description="Faça isso apenas após confirmar que a tentativa anterior falhou e não criou um lead no Vista." confirmLabel="Confirmar nova tentativa" onConfirm={()=>{confirmed.current=true;setOpen(false);formRef.current?.requestSubmit()}} onCancel={()=>setOpen(false)}/></form>}
