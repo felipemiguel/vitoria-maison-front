@@ -1,0 +1,17 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    { "idx": 0, "version": "7", "when": 1793941200000, "tag": "0000_initial_backend", "breakpoints": true },
+    { "idx": 1, "version": "7", "when": 1793941800000, "tag": "0001_vista_web_content", "breakpoints": true },
+    { "idx": 2, "version": "7", "when": 1793942400000, "tag": "0002_safe_publication", "breakpoints": true },
+    { "idx": 3, "version": "7", "when": 1793943000000, "tag": "0003_revoke_legacy_publications", "breakpoints": true },
+    { "idx": 4, "version": "7", "when": 1794020400000, "tag": "0004_admin_panel", "breakpoints": true },
+    { "idx": 5, "version": "7", "when": 1794024000000, "tag": "0005_admin_curation", "breakpoints": true },
+    { "idx": 6, "version": "7", "when": 1794096000000, "tag": "0006_vista_explorer", "breakpoints": true },
+    { "idx": 7, "version": "7", "when": 1794124800000, "tag": "0007_lead_capture", "breakpoints": true },
+    { "idx": 8, "version": "7", "when": 1794128400000, "tag": "0008_required_vista_vehicle", "breakpoints": true },
+    { "idx": 9, "version": "7", "when": 1794340800000, "tag": "0009_collection_slug_redirects", "breakpoints": true },
+    { "idx": 10, "version": "7", "when": 1794355200000, "tag": "0010_rbac_user_management", "breakpoints": true }
+  ]
+}
