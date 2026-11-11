@@ -1,8 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import { SiteShell } from "@/components/layout/site-shell";
-import { Header } from "@/components/layout/header";
-import { Footer } from "@/components/layout/footer";
 import { Analytics } from "@/components/analytics/analytics";
 import { BRAND_NAME, SITE_DESCRIPTION, SITE_LOCALE, SITE_TAGLINE, getSeoConfig } from "@/features/seo/config";
 import { defaultShareImage, robotsFor } from "@/features/seo/metadata";
@@ -25,4 +22,4 @@ export function generateMetadata(): Metadata {
 
 export const viewport: Viewport = { themeColor: "#f8f6f2" };
 
-export default function RootLayout({children}:{children:React.ReactNode}){return <html lang="pt-BR"><body><SiteShell header={<Header/>} footer={<Footer/>}>{children}</SiteShell><Analytics/></body></html>}
+export default function RootLayout({children}:{children:React.ReactNode}){return <html lang="pt-BR"><body>{children}<Analytics/></body></html>}

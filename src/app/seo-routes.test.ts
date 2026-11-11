@@ -46,7 +46,7 @@ describe("/imoveis/[slug]", () => {
   it("imóvel publicado e elegível: metadata indexável com canonical e foto real", async () => {
     const property = propertyFixture();
     repo.bySlug.set(property.slug, property);
-    const { generateMetadata } = await import("./imoveis/[slug]/page");
+    const { generateMetadata } = await import("./(public)/imoveis/[slug]/page");
     const metadata = await generateMetadata({ params: Promise.resolve({ slug: property.slug }) });
     expect(metadata.title).toBe("Flat à venda em Moema, 48 m²");
     expect(metadata.alternates?.canonical).toBe("https://www.vitoria-maison.test/imoveis/vista-12345678");
@@ -55,7 +55,7 @@ describe("/imoveis/[slug]", () => {
   });
 
   it("imóvel não publicado, rascunho ou indisponível (inelegível): noindex e 404", async () => {
-    const page = await import("./imoveis/[slug]/page");
+    const page = await import("./(public)/imoveis/[slug]/page");
     const metadata = await page.generateMetadata({ params: Promise.resolve({ slug: "vista-rascunho" }) });
     expect(metadata.robots).toEqual({ index: false, follow: false });
     expect(await digestOf(() => page.default({ params: Promise.resolve({ slug: "vista-rascunho" }) }))).toContain("404");
@@ -67,7 +67,7 @@ describe("catálogo com filtros", () => {
 
   it("rota base indexável; filtros e ordenação noindex com canonical na base", async () => {
     repo.list.mockResolvedValue(result(3));
-    const { generateMetadata } = await import("./comprar/page");
+    const { generateMetadata } = await import("./(public)/comprar/page");
     expect((await generateMetadata({ searchParams: Promise.resolve({}) })).robots).toMatchObject({ index: true });
     const filtered = await generateMetadata({ searchParams: Promise.resolve({ bairro: "moema", ordem: "price-asc" }) });
     expect(filtered.robots).toMatchObject({ index: false, follow: true });
@@ -77,7 +77,7 @@ describe("catálogo com filtros", () => {
 
   it("resultado vazio não é indexado", async () => {
     repo.list.mockResolvedValue(result(0));
-    const { generateMetadata } = await import("./imoveis/page");
+    const { generateMetadata } = await import("./(public)/imoveis/page");
     expect((await generateMetadata({ searchParams: Promise.resolve({}) })).robots).toMatchObject({ index: false });
   });
 });
@@ -86,7 +86,7 @@ describe("/colecoes/[slug]", () => {
   it("coleção com imóveis é indexável; coleção vazia não", async () => {
     collectionsState.items = [{ slug: "jardins", name: "Jardins", description: "Arquitetura e vida a pé.", coverImageUrl: null, sortOrder: 1 }, { slug: "vazia", name: "Vazia", description: null, coverImageUrl: null, sortOrder: 2 }];
     repo.collectionItems.set("jardins", [propertyFixture()]);
-    const { generateMetadata } = await import("./colecoes/[slug]/page");
+    const { generateMetadata } = await import("./(public)/colecoes/[slug]/page");
     const full = await generateMetadata({ params: Promise.resolve({ slug: "jardins" }) });
     expect(full.robots).toMatchObject({ index: true });
     expect(full.title).toBe("Coleção Jardins");
@@ -96,7 +96,7 @@ describe("/colecoes/[slug]", () => {
 
   it("slug antigo redireciona permanentemente para o slug atual", async () => {
     collectionsState.redirects.set("jardins-antigo", "jardins");
-    const page = await import("./colecoes/[slug]/page");
+    const page = await import("./(public)/colecoes/[slug]/page");
     expect(await digestOf(() => page.default({ params: Promise.resolve({ slug: "jardins-antigo" }) }))).toMatch(/NEXT_REDIRECT;.*\/colecoes\/jardins;308/);
     expect(await digestOf(() => page.default({ params: Promise.resolve({ slug: "inexistente" }) }))).toContain("404");
   });
@@ -105,7 +105,7 @@ describe("/colecoes/[slug]", () => {
 describe("/imovel/[slug] (legado Vitória Flats)", () => {
   it("redireciona somente imóveis selecionados e elegíveis; os demais respondem 404 (nunca para a home)", async () => {
     repo.byCode.set("16786218", "vista-16786218");
-    const page = await import("./imovel/[slug]/page");
+    const page = await import("./(public)/imovel/[slug]/page");
     expect(await digestOf(() => page.default({ params: Promise.resolve({ slug: "flat-campo-belo-sao-paulo-sp-1-quartos-26m2-16786218" }) }))).toMatch(/NEXT_REDIRECT;.*\/imoveis\/vista-16786218;308/);
     expect(await digestOf(() => page.default({ params: Promise.resolve({ slug: "studio-alto-do-ipiranga-sao-paulo-sp-1-quartos-17835908" }) }))).toContain("404");
   });
@@ -139,7 +139,7 @@ describe("integridade dos links internos", () => {
     const { NAV_LINKS } = await import("@/components/layout/header");
     const { FOOTER_LINKS } = await import("@/components/layout/footer");
     for (const [, href] of [...NAV_LINKS, ...FOOTER_LINKS, ["", "/contato"], ["", "/privacidade"], ["", "/termos"]]) {
-      expect(existsSync(join(process.cwd(), "src/app", href, "page.tsx")), href).toBe(true);
+      expect(existsSync(join(process.cwd(), "src/app/(public)", href, "page.tsx")), href).toBe(true);
     }
   });
 });
