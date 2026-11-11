@@ -114,3 +114,48 @@ describe("páginas", () => {
     expect(await digest(page.default({ searchParams: Promise.resolve({}) }))).toContain("/admin/acesso-negado");
   });
 });
+
+describe("sites de corretores", () => {
+  it("MANAGER sem BROKER não cria perfil, não cria site e não abre as telas", async () => {
+    as("MANAGER");
+    const mine = await import("./(protected)/meu-site/actions");
+    expect(await mine.saveOwnProfileAction({}, form({ displayName: "Gestor" }))).toEqual({ error: FORBIDDEN });
+    expect(await mine.createOwnSiteAction({}, form({ subdomain: "gestor" }))).toEqual({ error: FORBIDDEN });
+    const { requirePagePermission } = await import("@/features/access/server");
+    expect(await digest(requirePagePermission("broker-site:read-own"))).toContain("/admin/acesso-negado");
+    expect(await digest(requirePagePermission("broker-site:manage-all"))).toContain("/admin/acesso-negado");
+  });
+
+  it("BROKER não aprova, suspende nem reativa sites", async () => {
+    as("BROKER");
+    const admin = await import("./(protected)/sites-corretores/actions");
+    for (const operation of ["approve", "suspend", "reactivate", "returnToDraft"]) expect(await admin.changeSiteStatusAction({}, form({ id: uuid, version: "0", operation }))).toEqual({ error: FORBIDDEN });
+  });
+
+  it("sem sessão nenhuma ação de site é executada", async () => {
+    state.roles = null;
+    const mine = await import("./(protected)/meu-site/actions");
+    expect(await mine.submitOwnSiteAction({}, form({ version: "0" }))).toEqual({ error: "Sua sessão expirou. Entre novamente." });
+  });
+});
+
+describe("editor do corretor e revisão (6.4C)", () => {
+  it("MANAGER sem BROKER não seleciona imóveis, não destaca, não envia imagem nem abre a prévia", async () => {
+    as("MANAGER");
+    const mine = await import("./(protected)/meu-site/actions");
+    expect(await mine.addPropertiesAction({}, form({ single: uuid }))).toEqual({ error: FORBIDDEN });
+    expect(await mine.manageSelectionAction({}, form({ propertyId: uuid, op: "feature" }))).toEqual({ error: FORBIDDEN });
+    expect(await mine.updateOwnSiteAction({}, form({ version: "0", headline: "x" }))).toEqual({ error: FORBIDDEN });
+    const ownPreview = await import("./(protected)/meu-site/previa/guard");
+    expect(await digest(ownPreview.authorizeOwnPreview())).toContain("/admin/acesso-negado");
+  });
+
+  it("BROKER não abre prévia administrativa, não verifica CRECI nem define código Vista", async () => {
+    as("BROKER");
+    const adminPreview = await import("./(protected)/sites-corretores/[id]/previa/guard");
+    expect(await digest(adminPreview.authorizeAdminPreview(uuid))).toContain("/admin/acesso-negado");
+    const review = await import("./(protected)/sites-corretores/actions");
+    expect(await review.verifyCreciAction({}, form({ profileId: uuid, siteId: uuid }))).toEqual({ error: FORBIDDEN });
+    expect(await review.setVistaCodeAction({}, form({ profileId: uuid, siteId: uuid, vistaBrokerCode: "1" }))).toEqual({ error: FORBIDDEN });
+  });
+});

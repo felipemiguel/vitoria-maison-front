@@ -1,8 +1,8 @@
 import { and, asc, count, desc, eq, gte, ilike, inArray, lte, sql, type SQL } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import type { PaginatedProperties, Property, PropertyFilters, PropertyRepository, PropertySitemapRow } from "../types";
+import type { PaginatedProperties, Property, PropertyFacets, PropertyFilters, PropertyPurpose, PropertyRepository, PropertySitemapRow } from "../types";
 import type { PropertyType } from "../types";
-import { collectionProperties, collections, curatedProperties, propertySnapshots } from "@/database/schema";
+import { brokerSiteProperties, collectionProperties, collections, curatedProperties, propertySnapshots } from "@/database/schema";
 import * as schema from "@/database/schema";
 import type { PublicationPolicyConfig } from "../config";
 import { publicVisibilityConditions } from "../publication/property-publication-policy";
@@ -25,6 +25,7 @@ export class DatabasePropertyRepository implements PropertyRepository {
     const order = filters.sort === "price-asc" ? asc(price)
       : filters.sort === "price-desc" ? desc(price)
       : filters.sort === "area-desc" ? desc(propertySnapshots.privateArea)
+      : filters.sort === "site" && filters.brokerSiteId ? this.siteOrder(filters.brokerSiteId)
       : asc(curatedProperties.featuredOrder);
 
     const [rows, totals] = await Promise.all([
@@ -98,8 +99,29 @@ export class DatabasePropertyRepository implements PropertyRepository {
     return result;
   }
 
+  /** Destaques do site primeiro, depois a ordem definida pelo corretor (subconsulta correlacionada ao site). */
+  private siteOrder(brokerSiteId: string): SQL {
+    return sql`(select case when ${brokerSiteProperties.featured} then 0 else 1 end * 100000 + ${brokerSiteProperties.sortOrder} from ${brokerSiteProperties} where ${brokerSiteProperties.brokerSiteId} = ${brokerSiteId} and ${brokerSiteProperties.curatedPropertyId} = ${curatedProperties.id}) asc nulls last`;
+  }
+
+  async listFacets(filters: PropertyFilters = {}): Promise<PropertyFacets> {
+    if (!this.options.defaultState) return { purposes: [], types: [], neighborhoods: [] };
+    const rows = await this.db.selectDistinct({ purpose: curatedProperties.publicationPurpose, type: propertySnapshots.category, neighborhood: propertySnapshots.neighborhood })
+      .from(curatedProperties)
+      .innerJoin(propertySnapshots, eq(propertySnapshots.curatedPropertyId, curatedProperties.id))
+      .where(and(...this.buildConditions(filters)));
+    const sorted = (values: (string | null)[]) => [...new Set(values.filter((value): value is string => Boolean(value)))].sort((a, b) => a.localeCompare(b, "pt-BR"));
+    return {
+      purposes: sorted(rows.map((row) => row.purpose)) as PropertyPurpose[],
+      types: sorted(rows.map((row) => row.type)) as PropertyFacets["types"],
+      neighborhoods: sorted(rows.map((row) => row.neighborhood)),
+    };
+  }
+
   private buildConditions(filters: PropertyFilters): SQL[] {
     const conditions: SQL[] = publicVisibilityConditions(this.now(), this.options);
+    if (filters.slug) conditions.push(eq(curatedProperties.slug, filters.slug));
+    if (filters.vistaCode) conditions.push(ilike(curatedProperties.vistaCode, filters.vistaCode.replace(/[\\%_]/g, "")));
     if (filters.purpose) conditions.push(eq(curatedProperties.publicationPurpose, filters.purpose));
     if (filters.city) conditions.push(ilike(propertySnapshots.city, filters.city));
     if (filters.neighborhood) conditions.push(ilike(propertySnapshots.neighborhood, filters.neighborhood));
@@ -112,6 +134,9 @@ export class DatabasePropertyRepository implements PropertyRepository {
     if (filters.minPrice) conditions.push(sql`${price} >= ${filters.minPrice}`);
     if (filters.maxPrice) conditions.push(sql`${price} <= ${filters.maxPrice}`);
     if (filters.featured !== undefined) conditions.push(eq(curatedProperties.featured, filters.featured));
+    // Mesmo predicado de elegibilidade do catálogo + seleção do site: despublicar na Maison remove de todos os sites.
+    if (filters.brokerSiteId) conditions.push(inArray(curatedProperties.id,
+      this.db.select({ id: brokerSiteProperties.curatedPropertyId }).from(brokerSiteProperties).where(eq(brokerSiteProperties.brokerSiteId, filters.brokerSiteId))));
     if (filters.collection) conditions.push(inArray(curatedProperties.id,
       this.db.select({ id: collectionProperties.curatedPropertyId }).from(collectionProperties)
         .innerJoin(collections, eq(collections.id, collectionProperties.collectionId))

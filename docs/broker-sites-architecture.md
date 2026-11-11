@@ -1,18 +1,20 @@
 # Arquitetura futura: sites individuais de corretores
 
-Documento de preparação. **Nada aqui está implementado**, exceto o que a Fase 6 já entregou: o perfil `BROKER`, a permissão reservada `broker-site:manage-own`, usuários com múltiplos perfis e a área pessoal.
+Visão de arquitetura. **Implementado na Fase 6.4A** (ver `docs/broker-sites-foundation.md`): `broker_profiles`, `broker_sites`, `broker_site_properties`, permissões, serviços, validação de subdomínio, roteamento por hostname, prévia autenticada e página de diagnóstico. **Implementado na Fase 6.4B** (ver `docs/broker-site-frontend.md`): home, catálogo exclusivo, detalhe de imóvel, SEO individual e contato. **Implementado na Fase 6.4C** (ver `docs/broker-site-editor.md` e `docs/broker-site-publication.md`): editor do corretor (perfil, página, imagem de apresentação, seleção, destaques e ordem dos imóveis), prévia completa, completude e revisão administrativa com justificativa. **Implementado na Fase 6.4D** (ver `docs/broker-leads.md`, `docs/vista-broker-leads.md` e `docs/broker-sites-production.md`): leads vinculados ao corretor de origem (origem resolvida pelo Host, imóvel validado na seleção do site), painel Meu site → Leads, visão administrativa com divergências, estados de atribuição separados da entrega, reconciliação manual e feature flags. **Pendente**: confirmação oficial do Vista sobre atribuição de corretor, DNS/TLS curinga em produção e domínios próprios.
 
 ## Princípios
 
 1. **Perfil de acesso ≠ identidade de corretor.** `BROKER` diz o que a pessoa pode fazer no painel. A identidade profissional (nome público, CRECI, foto, biografia) é uma entidade própria, `broker_profiles`.
 2. **Um usuário, vários papéis.** Quem é `MANAGER + BROKER` usa uma conta e um login.
-3. **Autorização por propriedade.** `broker-site:manage-own` só vale para o site cujo dono é o próprio usuário. Ter `BROKER` nunca dá acesso ao site de outro corretor.
+3. **Autorização por propriedade.** As permissões `broker-site:*-own` só valem para o site cujo dono é o próprio usuário. Ter `BROKER` nunca dá acesso ao site de outro corretor.
 4. **ADMIN tem controle administrativo global**, mas não vira corretor nem ganha site automaticamente.
 5. **MANAGER não acessa automaticamente** os sites pessoais. Se for necessário, cria-se uma permissão explícita (ex.: `broker-sites:moderate`).
 6. **Um registro comercial por imóvel.** Sites selecionam imóveis da curadoria; não duplicam `curated_properties` nem `property_snapshots`.
 7. **Leads com escopo próprio**: cada lead sabe de qual site veio e a quem está atribuído.
 
-## Modelo proposto
+## Modelo
+
+> O modelo implementado na 6.4A segue esta proposta com ajustes: status `DRAFT | IN_REVIEW | PUBLISHED | SUSPENDED` (em vez de `published`), `headline`/`subtitle`/`hero_image_url`/`settings`, datas de revisão/aprovação/publicação/suspensão, `creci_verified_at` e `vista_broker_code_verified_at`, especialidades e regiões em JSONB. `custom_domain`, `theme` e as colunas de leads **ainda não existem**. O SQL abaixo é a referência original.
 
 ```sql
 -- Identidade profissional (0..1 por usuário). Existe apenas para quem atua como corretor.
@@ -88,12 +90,12 @@ Regras de SEO: um único canonical por página de imóvel (o do site institucion
 ```ts
 // Permissões efetivas continuam vindo dos perfis; o recurso decide a propriedade.
 function canManageBrokerSite(user: SessionUser, site: { ownerUserId: string }): boolean {
-  if (hasPermission(user, "broker-sites:manage-any")) return true;          // nova permissão, só ADMIN
-  return hasPermission(user, "broker-site:manage-own") && site.ownerUserId === user.id;
+  if (hasPermission(user, "broker-site:manage-all")) return true;           // ADMIN
+  return hasPermission(user, "broker-site:update-own") && site.ownerUserId === user.id;
 }
 ```
 
-- Conceder `broker-site:manage-own` ao `BROKER` só quando o site existir.
+- Implementado: `broker-profile:read-own`, `broker-profile:update-own`, `broker-site:read-own`, `broker-site:create-own`, `broker-site:update-own`, `broker-site:submit-review` (BROKER) e `broker-site:manage-all` (ADMIN), com a regra `canAccessBrokerSite`.
 - Toda consulta de site/leads do corretor filtra por `owner = user.id` no SQL.
 - Suspender o `broker_profiles` despublica o site sem desativar o usuário (que pode continuar como MANAGER).
 - Desativar o usuário revoga as sessões e despublica o site.

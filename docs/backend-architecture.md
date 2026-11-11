@@ -46,3 +46,8 @@ O predicado SQL reutilizável é derivado da mesma política de domínio. Contag
 Não há cache de aplicação para imóveis. Home, catálogo, detalhe e sitemap são dinâmicos; publicação, confirmação e despublicação acionam o ponto de invalidação do serviço para permitir uma estratégia futura sem alterar o domínio.
 
 Não existem rotas administrativas públicas. As mutações desta fase são exclusivamente CLI, no ambiente servidor.
+
+## Sites de corretores (Fase 6.4A)
+
+`features/brokers` contém configuração de domínios, resolução de hostname (`hosts.ts`), decisão de roteamento (`routing.ts`, usada pelo `proxy.ts`), regras de subdomínio, `BrokerProfileService`, `BrokerSiteService`, `BrokerSubdomainService` e `BrokerSitePropertyRepository`. A mesma aplicação e o mesmo banco atendem o site institucional e os subdomínios. Os imóveis de um site usam o `DatabasePropertyRepository` com o filtro `brokerSiteId`, ou seja, o mesmo predicado de elegibilidade do catálogo. As páginas institucionais vivem em `app/(public)`, e os sites em `app/broker-site/[subdomain]`, alcançados apenas por rewrite de hostname. Ver `docs/broker-sites-foundation.md`.
+

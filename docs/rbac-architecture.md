@@ -25,9 +25,11 @@ Fonte única: `src/features/access/permissions.ts`.
 | `collections:manage` | ✓ | ✓ | |
 | `leads:read`, `leads:manage` | ✓ | ✓ | |
 | `account:manage-own` (área pessoal) | ✓ | ✓ | ✓ |
-| `broker-site:manage-own` | reservada | reservada | reservada |
+| `broker-profile:read-own`, `broker-profile:update-own` | | | ✓ |
+| `broker-site:read-own`, `broker-site:create-own`, `broker-site:update-own`, `broker-site:submit-review` | | | ✓ |
+| `broker-site:manage-all` | ✓ | | |
 
-`broker-site:manage-own` existe no vocabulário, mas **não é concedida a ninguém** nesta fase. ADMIN não recebe identidade de corretor nem site automaticamente; o acesso futuro a sites será por propriedade do recurso (ver `docs/broker-sites-architecture.md`).
+As permissões `broker-*:*-own` exigem também **propriedade do recurso**: o dono do site/perfil gravado no banco precisa ser o usuário da sessão (`canAccessBrokerSite`, `requireBrokerSiteAccess`). ADMIN gerencia todos os sites (`broker-site:manage-all`), mas não recebe identidade de corretor. MANAGER não acessa sites pessoais. Detalhes em `docs/broker-sites-foundation.md`.
 
 ## Mapa de operações
 
@@ -52,6 +54,10 @@ Fonte única: `src/features/access/permissions.ts`.
 | Atribuir/remover perfis | idem | `users:assign-roles` |
 | Reenviar convite | `resendInviteAction` → serviço | `users:update` |
 | Minha conta (nome, senha) | página + actions | `account:manage-own` |
+| Meu site: perfil profissional | `saveOwnProfileAction` | `broker-profile:update-own` |
+| Meu site: criar, editar, enviar para revisão, prévia | actions + páginas | `broker-site:create-own` / `update-own` / `submit-review` / `read-own` + propriedade |
+| Meu site: seleção, destaques e ordem dos imóveis, imagem de apresentação | `addPropertiesAction`, `manageSelectionAction`, `uploadHeroAction` | `broker-site:update-own` + propriedade |
+| Sites de corretores: listar, revisar, aprovar, devolver, suspender, reativar, prévia, verificar CRECI, código Vista | `/admin/sites-corretores` + actions | `broker-site:manage-all` |
 
 Comandos CLI (`npm run maison:*`, `vista:*`, `admin:create`) rodam no servidor com acesso direto ao banco, fora do painel, e não passam pelo RBAC. O acesso a eles é controlado pela infraestrutura.
 

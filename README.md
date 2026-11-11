@@ -140,6 +140,20 @@ Antes de produção, aplique `npm run db:migrate` (migration `0010`, que preserv
 
 Documentação: `docs/rbac-architecture.md`, `docs/user-management.md` e `docs/broker-sites-architecture.md`.
 
+## Sites de corretores (fundação)
+
+Cada corretor (perfil BROKER) pode preparar um perfil profissional e um site em `nome.<domínio-base>`, servido pela mesma aplicação e pelo mesmo banco. O site nasce em rascunho, é enviado para revisão e só fica público após a aprovação de um ADMIN. O site publicado tem home editorial, catálogo exclusivo (somente os imóveis selecionados e elegíveis na Maison) e página de imóvel com o contato do corretor (`docs/broker-site-frontend.md`).
+
+```dotenv
+BROKER_SITES_ENABLED=false
+BROKER_SITES_BASE_DOMAIN=vitoriamaison.com.br   # local: maison.lvh.me
+BROKER_SITES_INDEXING_ENABLED=false             # home dos sites publicados indexável (exige indexação global)
+```
+
+O corretor configura tudo em **Meu site** (perfil, foto, textos da página, imagem de apresentação, imóveis da Maison, até 6 destaques, ordem e prévia completa) e solicita a publicação quando a completude chega a 100%. O ADMIN revisa em **Sites de corretores**: verifica o CRECI, define o código Vista, aprova, devolve com justificativa, suspende ou reativa (`docs/broker-site-editor.md`, `docs/broker-site-publication.md`).
+
+Local: `BROKER_SITES_ENABLED=true BROKER_SITES_BASE_DOMAIN=maison.lvh.me npm run dev` e abra `http://ana.maison.lvh.me:3000`. Detalhes, segurança e pendências de DNS em `docs/broker-sites-foundation.md`.
+
 Testes de integração com PostgreSQL (incluindo concorrência do último ADMIN):
 
 ```bash

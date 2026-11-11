@@ -10,8 +10,19 @@ const photoHosts = hostnames(process.env.VISTA_IMAGE_HOSTNAME, process.env.ADMIN
 
 const noIndexHeaders = [{ key: "X-Robots-Tag", value: "noindex, nofollow, noarchive" }];
 
+/**
+ * Desenvolvimento de subdomínios sem DNS público: o dev server já aceita *.localhost; para lvh.me
+ * (ou outro domínio local explícito em BROKER_SITES_BASE_DOMAIN) liberamos apenas esse domínio.
+ * Não tem efeito em produção (allowedDevOrigins só vale para `next dev`).
+ */
+const brokerBase = process.env.BROKER_SITES_BASE_DOMAIN?.trim().toLowerCase();
+const devOrigins = process.env.NODE_ENV !== "production" && brokerBase && /^[a-z0-9.-]+$/.test(brokerBase) ? [brokerBase, `*.${brokerBase}`] : [];
+
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // Upload da foto do corretor (limite próprio de 5 MB validado no servidor + margem do multipart).
+  experimental: { serverActions: { bodySizeLimit: "6mb" } },
+  ...(devOrigins.length ? { allowedDevOrigins: devOrigins } : {}),
   images: {
     formats: ["image/avif", "image/webp"],
     // Fotografias do Vista têm nome com hash e Cache-Control de 30 dias na origem.

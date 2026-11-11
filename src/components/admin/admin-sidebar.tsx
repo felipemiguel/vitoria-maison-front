@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Building2, FolderHeart, Inbox, LayoutDashboard, Menu, PlusCircle, Search, Sparkles, UserRound, Users, X } from "lucide-react";
+import { Building2, FolderHeart, Globe2, Inbox, LayoutDashboard, Menu, MonitorSmartphone, PlusCircle, Search, Sparkles, UserRound, Users, X } from "lucide-react";
 import { useState } from "react";
 import type { AdminNavIcon } from "@/features/access/navigation";
 
-const icons: Record<AdminNavIcon, typeof LayoutDashboard> = { dashboard: LayoutDashboard, properties: Building2, vista: Search, import: PlusCircle, highlights: Sparkles, collections: FolderHeart, leads: Inbox, users: Users, account: UserRound };
+const icons: Record<AdminNavIcon, typeof LayoutDashboard> = { dashboard: LayoutDashboard, properties: Building2, vista: Search, import: PlusCircle, highlights: Sparkles, collections: FolderHeart, leads: Inbox, users: Users, brokerSites: Globe2, mySite: MonitorSmartphone, account: UserRound };
 
 /** Os itens chegam filtrados pelo servidor conforme as permissões. Esconder itens não é controle de acesso. */
 export function AdminSidebar({ items }: { items: { href: string; label: string; icon: AdminNavIcon }[] }) {

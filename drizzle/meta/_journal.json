@@ -12,6 +12,9 @@
     { "idx": 7, "version": "7", "when": 1794124800000, "tag": "0007_lead_capture", "breakpoints": true },
     { "idx": 8, "version": "7", "when": 1794128400000, "tag": "0008_required_vista_vehicle", "breakpoints": true },
     { "idx": 9, "version": "7", "when": 1794340800000, "tag": "0009_collection_slug_redirects", "breakpoints": true },
-    { "idx": 10, "version": "7", "when": 1794355200000, "tag": "0010_rbac_user_management", "breakpoints": true }
+    { "idx": 10, "version": "7", "when": 1794355200000, "tag": "0010_rbac_user_management", "breakpoints": true },
+    { "idx": 11, "version": "7", "when": 1794441600000, "tag": "0011_broker_sites_foundation", "breakpoints": true },
+    { "idx": 12, "version": "7", "when": 1794528000000, "tag": "0012_media_assets", "breakpoints": true },
+    { "idx": 13, "version": "7", "when": 1794614400000, "tag": "0013_broker_site_editor", "breakpoints": true }
   ]
 }

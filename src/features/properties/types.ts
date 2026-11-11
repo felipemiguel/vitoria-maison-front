@@ -38,7 +38,9 @@ export type PublishedProperty = {
   curation: { published: boolean; featured: boolean; featuredOrder?: number; collections: string[] };
 };
 export type Property = PublishedProperty;
-export type PropertyFilters = { purpose?: PropertyPurpose; city?: string; neighborhood?: string; type?: PropertyType; category?: string; minPrice?: number; maxPrice?: number; minArea?: number; maxArea?: number; bedrooms?: number; collection?: string; featured?: boolean; sort?: "price-asc" | "price-desc" | "area-desc" | "editorial"; page?: number; pageSize?: number };
+export type PropertyFilters = { /** Slug exato (detalhe dentro de um escopo, ex.: site de corretor). */ slug?: string; /** Código Vista exato (sem diferenciar maiúsculas). */ vistaCode?: string; purpose?: PropertyPurpose; city?: string; neighborhood?: string; type?: PropertyType; category?: string; minPrice?: number; maxPrice?: number; minArea?: number; maxArea?: number; bedrooms?: number; collection?: string; /** Restringe aos imóveis selecionados por um site de corretor (já publicado). */ brokerSiteId?: string; featured?: boolean; sort?: "price-asc" | "price-desc" | "area-desc" | "editorial" | /** destaque e ordem definidos pelo site do corretor */ "site"; page?: number; pageSize?: number };
+/** Valores existentes entre os imóveis elegíveis de um escopo; usados para montar filtros reais. */
+export type PropertyFacets = { purposes: PropertyPurpose[]; types: PropertyType[]; neighborhoods: string[] };
 export type PaginatedProperties = { items: Property[]; total: number; page: number; pageSize: number; pages: number };
 export type PropertySitemapRow = { slug: string; lastModified?: Date };
 export interface PropertyRepository {
@@ -52,4 +54,6 @@ export interface PropertyRepository {
   listSitemapEntries(): Promise<PropertySitemapRow[]>;
   /** Quantidade de imóveis elegíveis por slug de coleção publicada. */
   countEligibleByCollection(): Promise<Map<string, number>>;
+  /** Finalidades, tipos e bairros presentes entre os imóveis elegíveis que atendem aos filtros. */
+  listFacets(filters?: PropertyFilters): Promise<PropertyFacets>;
 }

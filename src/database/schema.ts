@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { boolean, integer, jsonb, numeric, pgEnum, pgTable, primaryKey, text, timestamp, uniqueIndex, uuid, varchar, index } from "drizzle-orm/pg-core";
+import { boolean, customType, integer, jsonb, numeric, pgEnum, pgTable, primaryKey, text, timestamp, uniqueIndex, uuid, varchar, index } from "drizzle-orm/pg-core";
 
 export const publicationPurposeEnum = pgEnum("publication_purpose", ["SALE", "RENT", "INVESTMENT"]);
 export const snapshotSyncStatusEnum = pgEnum("snapshot_sync_status", ["SUCCESS"]);
@@ -229,7 +229,6 @@ export const leadSubmissions = pgTable("lead_submissions", {
   sourcePage: varchar("source_page", { length: 300 }).notNull(),
   deliveryStatus: leadDeliveryStatusEnum("delivery_status").notNull().default("PENDING"),
   attempts: integer("attempts").notNull().default(0),
-  vistaReference: varchar("vista_reference", { length: 200 }),
   lastErrorCode: varchar("last_error_code", { length: 80 }),
   submissionKey: varchar("submission_key", { length: 100 }).notNull(),
   deduplicationHash: varchar("deduplication_hash", { length: 64 }).notNull(),
@@ -259,3 +258,88 @@ export type CuratedPropertyRow = typeof curatedProperties.$inferSelect;
 export type PropertySnapshotRow = typeof propertySnapshots.$inferSelect;
 export type AdminUserRow = typeof adminUsers.$inferSelect;
 export type LeadSubmissionRow = typeof leadSubmissions.$inferSelect;
+
+/** Perfil profissional do corretor (identidade pública). Autenticação continua em admin_users. */
+export const brokerProfiles = pgTable("broker_profiles", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").notNull().references(() => adminUsers.id, { onDelete: "restrict" }),
+  displayName: varchar("display_name", { length: 120 }).notNull(),
+  professionalTitle: varchar("professional_title", { length: 120 }),
+  biography: text("biography"),
+  profileImageUrl: text("profile_image_url"),
+  whatsapp: varchar("whatsapp", { length: 20 }),
+  phone: varchar("phone", { length: 20 }),
+  emailPublic: varchar("email_public", { length: 320 }),
+  creci: varchar("creci", { length: 20 }),
+  creciVerifiedAt: timestamp("creci_verified_at", { withTimezone: true }),
+  vistaBrokerCode: varchar("vista_broker_code", { length: 40 }),
+  vistaBrokerCodeVerifiedAt: timestamp("vista_broker_code_verified_at", { withTimezone: true }),
+  /** Foto enviada pelo painel (media_assets). Tem precedência sobre profileImageUrl. */
+  profileImageAssetId: uuid("profile_image_asset_id"),
+  specialties: jsonb("specialties").$type<string[]>().notNull().default(sql`'[]'::jsonb`),
+  serviceRegions: jsonb("service_regions").$type<string[]>().notNull().default(sql`'[]'::jsonb`),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [uniqueIndex("broker_profiles_user_unique").on(table.userId)]);
+
+export type BrokerSiteStatus = "DRAFT" | "IN_REVIEW" | "PUBLISHED" | "SUSPENDED";
+
+export const brokerSites = pgTable("broker_sites", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  brokerProfileId: uuid("broker_profile_id").notNull().references(() => brokerProfiles.id, { onDelete: "restrict" }),
+  subdomain: varchar("subdomain", { length: 30 }).notNull(),
+  status: varchar("status", { length: 20 }).$type<BrokerSiteStatus>().notNull().default("DRAFT"),
+  headline: varchar("headline", { length: 160 }),
+  subtitle: varchar("subtitle", { length: 300 }),
+  heroImageUrl: text("hero_image_url"),
+  settings: jsonb("settings").$type<Record<string, unknown>>().notNull().default(sql`'{}'::jsonb`),
+  submittedForReviewAt: timestamp("submitted_for_review_at", { withTimezone: true }),
+  approvedAt: timestamp("approved_at", { withTimezone: true }),
+  approvedBy: uuid("approved_by").references(() => adminUsers.id, { onDelete: "set null" }),
+  publishedAt: timestamp("published_at", { withTimezone: true }),
+  suspendedAt: timestamp("suspended_at", { withTimezone: true }),
+  /** Imagem de apresentação enviada pelo painel (media_assets, kind BROKER_SITE_HERO). */
+  heroImageAssetId: uuid("hero_image_asset_id"),
+  lastReviewDecision: varchar("last_review_decision", { length: 20 }).$type<"APPROVED" | "RETURNED">(),
+  lastReviewNotes: text("last_review_notes"),
+  lastReviewedAt: timestamp("last_reviewed_at", { withTimezone: true }),
+  lastReviewedBy: uuid("last_reviewed_by"),
+  suspensionReason: text("suspension_reason"),
+  version: integer("version").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  uniqueIndex("broker_sites_profile_unique").on(table.brokerProfileId),
+  uniqueIndex("broker_sites_subdomain_unique").on(table.subdomain),
+  index("broker_sites_status_idx").on(table.status),
+]);
+
+export const brokerSiteProperties = pgTable("broker_site_properties", {
+  brokerSiteId: uuid("broker_site_id").notNull().references(() => brokerSites.id, { onDelete: "cascade" }),
+  curatedPropertyId: uuid("curated_property_id").notNull().references(() => curatedProperties.id, { onDelete: "cascade" }),
+  featured: boolean("featured").notNull().default(false),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  primaryKey({ name: "broker_site_properties_pk", columns: [table.brokerSiteId, table.curatedPropertyId] }),
+  index("broker_site_properties_property_idx").on(table.curatedPropertyId),
+  index("broker_site_properties_order_idx").on(table.brokerSiteId, table.sortOrder),
+]);
+
+const bytea = customType<{ data: Buffer; driverData: Buffer }>({ dataType: () => "bytea" });
+
+/** Mídia enviada pelo painel, armazenada no PostgreSQL. Sempre WebP já tratado pelo servidor. */
+export const mediaAssets = pgTable("media_assets", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  kind: varchar("kind", { length: 40 }).$type<"BROKER_PROFILE_PHOTO" | "BROKER_SITE_HERO">().notNull(),
+  ownerUserId: uuid("owner_user_id").notNull().references(() => adminUsers.id, { onDelete: "cascade" }),
+  contentType: varchar("content_type", { length: 60 }).$type<"image/webp">().notNull(),
+  bytes: bytea("bytes").notNull(),
+  sizeBytes: integer("size_bytes").notNull(),
+  width: integer("width").notNull(),
+  height: integer("height").notNull(),
+  sha256: varchar("sha256", { length: 64 }).notNull(),
+  createdBy: uuid("created_by").references(() => adminUsers.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [index("media_assets_owner_idx").on(table.ownerUserId, table.kind)]);
+

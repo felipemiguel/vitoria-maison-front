@@ -1,9 +1,13 @@
 import { mockProperties } from "../mocks/properties";
-import type { PaginatedProperties, Property, PropertyFilters, PropertyRepository, PropertySitemapRow } from "../types";
+import type { PaginatedProperties, Property, PropertyFacets, PropertyFilters, PropertyRepository, PropertySitemapRow } from "../types";
 
 export class MockPropertyRepository implements PropertyRepository {
   async list(filters: PropertyFilters = {}): Promise<PaginatedProperties> {
+    // Conteúdo mock nunca alimenta sites de corretores.
+    if (filters.brokerSiteId) return { items: [], total: 0, page: filters.page ?? 1, pageSize: filters.pageSize ?? 9, pages: 1 };
     let items = mockProperties.filter((p) => p.curation.published);
+    if (filters.slug) items = items.filter((p) => p.slug === filters.slug);
+    if (filters.vistaCode) items = items.filter((p) => p.commercial.code.toLowerCase() === filters.vistaCode!.toLowerCase());
     if (filters.purpose) items = items.filter((p) => p.commercial.purpose === filters.purpose);
     if (filters.city) items = items.filter((p) => p.location.city.toLowerCase() === filters.city!.toLowerCase());
     if (filters.neighborhood) items = items.filter((p) => p.location.neighborhood.toLowerCase() === filters.neighborhood!.toLowerCase());
@@ -32,5 +36,10 @@ export class MockPropertyRepository implements PropertyRepository {
     const counts = new Map<string, number>();
     for (const property of mockProperties.filter((p) => p.curation.published)) for (const slug of property.curation.collections.filter(Boolean)) counts.set(slug, (counts.get(slug) ?? 0) + 1);
     return counts;
+  }
+  async listFacets(filters: PropertyFilters = {}): Promise<PropertyFacets> {
+    const items = (await this.list({ ...filters, page: 1, pageSize: 1000 })).items;
+    const unique = <T extends string>(values: T[]) => [...new Set(values)].sort((a, b) => a.localeCompare(b, "pt-BR"));
+    return { purposes: unique(items.map((p) => p.commercial.purpose)), types: unique(items.map((p) => p.commercial.type)), neighborhoods: unique(items.map((p) => p.location.neighborhood)) };
   }
 }

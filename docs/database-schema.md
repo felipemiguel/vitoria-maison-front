@@ -1,6 +1,6 @@
 # Schema PostgreSQL
 
-Migrations: `0000_initial_backend` a `0010_rbac_user_management`. `0003` revoga aprovações legadas; `0004` adiciona autenticação e situação da sincronização; `0005` adiciona auditoria administrativa e versão otimista de coleções; `0006` registra lotes idempotentes de importação.
+Migrations: `0000_initial_backend` a `0013_broker_site_editor`.
 
 ## curated_properties
 
@@ -19,6 +19,14 @@ Coleções editoriais e relacionamento N:N, com unicidade no par de IDs e ordem 
 ## collection_slug_redirects
 
 Slugs anteriores de coleções (`old_slug` → `collection_id`), gravados na mesma transação em que o slug é alterado no painel. `/colecoes/{antigo}` responde com redirecionamento permanente para o slug atual. A resolução por ID evita cadeias; um slug que volta a ser usado sai da tabela, evitando loops.
+
+## broker_profiles, broker_sites e broker_site_properties
+
+Perfil profissional (1 por usuário), site do corretor (1 por perfil, subdomínio único com CHECK de formato, status com CHECK, publicado exige aprovação) e seleção N:N de imóveis da curadoria (sem duplicar dados comerciais). Ver `docs/broker-sites-foundation.md`.
+
+## media_assets
+
+Mídia enviada pelo painel, armazenada em `bytea` (hoje só a foto profissional do corretor, WebP já tratado, até 2 MB por CHECK). Ligada a `broker_profiles.profile_image_asset_id`. Servida por `/media/<id>`.
 
 ## sync_runs
 

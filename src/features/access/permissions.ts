@@ -4,7 +4,7 @@
  * - As permissões efetivas são a UNIÃO das permissões dos perfis do usuário.
  * - Negação por padrão: perfil desconhecido ou usuário inativo não recebe nenhuma permissão.
  * - Não há hierarquia entre perfis; ADMIN recebe todas as permissões explicitamente,
- *   exceto as que dependem de propriedade do recurso (`broker-site:manage-own`).
+ *   exceto as que dependem de propriedade do recurso (`broker-*:*-own`), que vêm do perfil BROKER.
  */
 
 export const ROLE_CODES = ["ADMIN", "MANAGER", "BROKER"] as const;
@@ -16,7 +16,10 @@ export const PERMISSIONS = [
   "collections:manage",
   "leads:read", "leads:manage",
   "account:manage-own",
-  "broker-site:manage-own",
+  // Sites de corretores: as permissões "-own" exigem também ser dono do recurso (validado no servidor).
+  "broker-profile:read-own", "broker-profile:update-own",
+  "broker-site:read-own", "broker-site:create-own", "broker-site:update-own", "broker-site:submit-review",
+  "broker-site:manage-all",
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 
@@ -26,11 +29,17 @@ const OPERATIONS: Permission[] = [
 ];
 const USER_MANAGEMENT: Permission[] = ["users:read", "users:create", "users:update", "users:deactivate", "users:assign-roles"];
 
+const BROKER_OWN: Permission[] = [
+  "broker-profile:read-own", "broker-profile:update-own",
+  "broker-site:read-own", "broker-site:create-own", "broker-site:update-own", "broker-site:submit-review",
+];
+
 export const ROLE_PERMISSIONS: Record<RoleCode, readonly Permission[]> = {
-  ADMIN: [...USER_MANAGEMENT, ...OPERATIONS, "account:manage-own"],
+  // ADMIN gerencia todos os sites, mas não recebe identidade de corretor: as permissões "-own" vêm só do BROKER.
+  ADMIN: [...USER_MANAGEMENT, ...OPERATIONS, "account:manage-own", "broker-site:manage-all"],
+  // MANAGER não tem acesso automático aos sites pessoais dos corretores.
   MANAGER: [...OPERATIONS, "account:manage-own"],
-  // `broker-site:manage-own` fica reservado para a fase do site individual; ainda não é concedido.
-  BROKER: ["account:manage-own"],
+  BROKER: ["account:manage-own", ...BROKER_OWN],
 };
 
 export const ROLE_LABELS: Record<RoleCode, string> = { ADMIN: "Administrador", MANAGER: "Gestor", BROKER: "Corretor" };

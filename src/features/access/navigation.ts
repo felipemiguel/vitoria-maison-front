@@ -1,6 +1,6 @@
 import { hasPermission, type AccessSubject, type Permission } from "./permissions";
 
-export type AdminNavIcon = "dashboard" | "properties" | "vista" | "import" | "highlights" | "collections" | "leads" | "users" | "account";
+export type AdminNavIcon = "dashboard" | "properties" | "vista" | "import" | "highlights" | "collections" | "leads" | "users" | "brokerSites" | "mySite" | "account";
 export type AdminNavItem = { href: string; label: string; icon: AdminNavIcon; permission: Permission };
 
 /** Itens do menu e a permissão exigida por cada um. O servidor filtra antes de enviar ao cliente. */
@@ -13,6 +13,8 @@ export const ADMIN_NAVIGATION: AdminNavItem[] = [
   { href: "/admin/colecoes", label: "Coleções", icon: "collections", permission: "collections:manage" },
   { href: "/admin/leads", label: "Leads", icon: "leads", permission: "leads:read" },
   { href: "/admin/usuarios", label: "Usuários", icon: "users", permission: "users:read" },
+  { href: "/admin/sites-corretores", label: "Sites de corretores", icon: "brokerSites", permission: "broker-site:manage-all" },
+  { href: "/admin/meu-site", label: "Meu site", icon: "mySite", permission: "broker-site:read-own" },
   { href: "/admin/minha-conta", label: "Minha conta", icon: "account", permission: "account:manage-own" },
 ];
 
