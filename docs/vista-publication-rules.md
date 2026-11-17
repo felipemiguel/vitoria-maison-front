@@ -61,7 +61,7 @@ As mesmas operações estão disponíveis no detalhe administrativo. O administr
 
 ## Limitações
 
-- A galeria completa ainda não está liberada para a chave; somente `FotoDestaque` foi confirmada.
+- A galeria completa usa automaticamente a origem aninhada `Foto`, confirmada pelo suporte e validada com a chave atual (52 fotografias no imóvel `17835787`). A origem genérica `fotos` não é aceita nesta instância.
 - `Finalidade=Residencial` não distingue venda/locação.
 - Enquanto o Vista não liberar um campo inequívoco, uma resposta válida de sincronização confirma operacionalmente a disponibilidade; a origem `VISTA_SYNC` deixa essa decisão auditável.
 - Não há painel administrativo, autenticação administrativa ou cron nesta fase.

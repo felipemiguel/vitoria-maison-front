@@ -3,6 +3,19 @@ import { vistaPropertyFixture } from "./__fixtures__/property";
 import { mapVistaProperty, normalizeVistaCommercialData, parseVistaPropertySnapshot } from "./vista-mapper";
 
 describe("mapeamento Vista", () => {
+  it("normaliza a relação Foto indexada retornada pela API real", () => {
+    const normalized = normalizeVistaCommercialData({
+      ...vistaPropertyFixture, fotos: undefined,
+      Foto: {
+        "photo-1": { Foto: "https://images.example.test/1.jpg", Destaque: "Nao" },
+        "photo-2": { Foto: vistaPropertyFixture.FotoDestaque, Destaque: "Sim" },
+        "photo-3": { Foto: "http://images.example.test/unsafe.jpg" },
+      },
+    });
+    expect(normalized.images.map((image) => image.url)).toEqual([
+      vistaPropertyFixture.FotoDestaque, "https://images.example.test/1.jpg",
+    ]);
+  });
   it("valida e normaliza o snapshot confirmado", () => {
     const snapshot = parseVistaPropertySnapshot(vistaPropertyFixture);
     expect(snapshot.ValorVenda).toBe(1_250_000);
@@ -19,6 +32,10 @@ describe("mapeamento Vista", () => {
     expect(normalized.sourcePurpose).toBe("Residencial");
     expect(normalized.sourceUpdatedAt?.toISOString()).toBe("2026-11-06T00:00:00.000Z");
     expect(normalized.availabilityStatus).toBe("UNKNOWN");
+    expect(normalized.images).toEqual([
+      { url: "https://images.example.test/cover.jpg", alt: "Imagem de destaque do imóvel" },
+      { url: "https://images.example.test/1.jpg", alt: "Sala fictícia" },
+    ]);
   });
 
   it("preserva título e descrição do Vista como conteúdo de origem", () => {

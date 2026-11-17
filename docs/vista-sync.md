@@ -14,6 +14,14 @@ Somente códigos existentes em `curated_properties` são sincronizados por `vist
 8. Preservar integralmente curadoria e publicação.
 9. Registrar o resultado em `sync_runs`.
 
+A sincronização solicita automaticamente a relação aninhada `Foto` (`Foto`, `FotoPequena`, `Destaque`) em uma segunda consulta. A resposta é um objeto indexado por código de foto, convertido para a lista `images` do snapshot. Somente URLs HTTPS válidas são persistidas, sem download local e sem imagens fictícias. Se a consulta falhar, o snapshot comercial continua válido com a capa; uma nova operação tenta novamente.
+
+### Contrato confirmado de fotografias
+
+O exemplo genérico da documentação usava a origem `fotos`, recusada nesta instância. O suporte confirmou a origem correta `Foto`, no singular e com inicial maiúscula. O teste real com a chave atual e o imóvel `17835787` retornou HTTP 200 e 52 fotografias.
+
+Consulta confirmada: `GET /imoveis/detalhes`, parâmetros `key`, `imovel`, `pesquisa={"fields":["Codigo","FotoDestaque",{"Foto":["Foto","FotoPequena","Destaque"]}]}`. A sincronização preenche a galeria de imóveis novos e já importados; não é necessário reimportar. Não há variável de ambiente para habilitar a galeria.
+
 Falhas de rede são temporárias e preservam o snapshot. Resposta inválida e imóvel ausente são registrados sem exclusão automática. A sincronização não publica nem republica; uma sincronização bem-sucedida renova a confirmação operacional de disponibilidade. Um snapshot mais antigo que o limite configurado deixa de ser elegível mesmo quando preservado.
 
 ## Comandos

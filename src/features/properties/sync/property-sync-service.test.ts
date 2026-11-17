@@ -1,6 +1,7 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { vistaPropertyFixture } from "@/integrations/vista/__fixtures__/property";
 import type { VistaClient } from "@/integrations/vista/vista-types";
+import { VistaError } from "@/integrations/vista/vista-errors";
 import type { PropertyCommercialData } from "../types";
 import { PropertySyncService } from "./property-sync-service";
 import type { CuratedSelection, PropertySyncStore, SyncRunSummary } from "./types";
@@ -22,6 +23,8 @@ class MemoryStore implements PropertySyncStore {
 const vista = (response: unknown): VistaClient => ({ listProperties: async () => [], getPropertyDetails: async () => response });
 
 describe("PropertySyncService", () => {
+  beforeEach(() => vi.restoreAllMocks());
+
   it("gera prévia sem criar curadoria ou snapshot", async () => {
     const store = new MemoryStore();
     const getPropertyDetails = vi.fn(async () => vistaPropertyFixture);
@@ -95,5 +98,59 @@ describe("PropertySyncService", () => {
     expect(getPropertyDetails).toHaveBeenCalledTimes(2);
     expect(store.snapshots.has("id-31")).toBe(true);
     expect(store.snapshots.has("id-32")).toBe(true);
+  });
+
+  it("busca e persiste a galeria separadamente quando ela está disponível", async () => {
+    const store = new MemoryStore();
+    store.selections.set("31", { id: "id-31", vistaCode: "31", slug: "vista-31", published: false });
+    const coreProperty = { ...vistaPropertyFixture, fotos: undefined };
+    const getPropertyDetails = vi.fn(async (_code: string, options: { fields: readonly unknown[] }) => options.fields.some((field) => typeof field === "object")
+      ? { Codigo: "31", Foto: { "photo-1": vistaPropertyFixture.fotos[0] } }
+      : coreProperty);
+    const result = await new PropertySyncService({ listProperties: async () => [], getPropertyDetails }, store).syncOne("31");
+    expect(result.status).toBe("SUCCESS");
+    expect(getPropertyDetails).toHaveBeenCalledTimes(2);
+    expect(store.snapshots.get("id-31")?.images).toHaveLength(2);
+  });
+
+  it("continua com a capa e não repete a consulta da galeria após recusa do Vista", async () => {
+    const store = new MemoryStore();
+    store.selections.set("31", { id: "id-31", vistaCode: "31", slug: "vista-31", published: false });
+    store.selections.set("32", { id: "id-32", vistaCode: "32", slug: "vista-32", published: false });
+    const coreProperty = { ...vistaPropertyFixture, fotos: undefined };
+    const getPropertyDetails = vi.fn(async (code: string, options: { fields: readonly unknown[] }) => {
+      if (options.fields.some((field) => typeof field === "object")) {
+        throw new VistaError("Origem fotos não disponível.", "HTTP", { status: 400 });
+      }
+      return { ...coreProperty, Codigo: code };
+    });
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+
+    const results = await new PropertySyncService({ listProperties: async () => [], getPropertyDetails }, store, 1).syncAll();
+
+    expect(results).toEqual([{ code: "31", status: "SUCCESS" }, { code: "32", status: "SUCCESS" }]);
+    expect(getPropertyDetails).toHaveBeenCalledTimes(3);
+    expect(store.snapshots.get("id-31")?.images).toHaveLength(1);
+    expect(store.snapshots.get("id-32")?.images).toHaveLength(1);
+  });
+
+  it("testa novamente a galeria em uma nova operação de sincronização", async () => {
+    const store = new MemoryStore();
+    store.selections.set("31", { id: "id-31", vistaCode: "31", slug: "vista-31", published: false });
+    const coreProperty = { ...vistaPropertyFixture, fotos: undefined };
+    const getPropertyDetails = vi.fn(async (code: string, options: { fields: readonly unknown[] }) => {
+      if (options.fields.some((field) => typeof field === "object")) {
+        throw new VistaError("Origem fotos não disponível.", "HTTP", { status: 400 });
+      }
+      return { ...coreProperty, Codigo: code };
+    });
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const service = new PropertySyncService({ listProperties: async () => [], getPropertyDetails }, store);
+
+    await service.syncOne("31");
+    await service.syncOne("31");
+
+    const galleryCalls = getPropertyDetails.mock.calls.filter(([, options]) => options.fields.some((field) => typeof field === "object"));
+    expect(galleryCalls).toHaveLength(2);
   });
 });

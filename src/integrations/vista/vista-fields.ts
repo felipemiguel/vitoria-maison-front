@@ -33,6 +33,7 @@ export const VISTA_DETAIL_CORE_FIELDS = [
 export const VISTA_DETAIL_PHOTO_FIELDS = [
   "Codigo",
   "FotoDestaque",
+  { Foto: ["Foto", "FotoPequena", "Destaque"] },
 ] as const satisfies readonly VistaField[];
 
 export const VISTA_DETAIL_FIELDS = VISTA_DETAIL_CORE_FIELDS;

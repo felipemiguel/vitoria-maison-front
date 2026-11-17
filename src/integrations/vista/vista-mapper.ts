@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { Property, PropertyCommercialData } from "@/features/properties/types";
 import { mapCategory } from "@/features/properties/category-mapping";
 import { VistaMappingError } from "./vista-errors";
+import { extractVistaPhotos } from "./vista-response";
 
 const numericValue = z.union([z.number(), z.string()]).transform((value, context) => {
   if (typeof value === "number" && Number.isFinite(value)) return value;
@@ -72,7 +73,10 @@ function httpsImage(url: string | undefined, description: string, allowedHostnam
 }
 
 export function parseVistaPropertySnapshot(raw: unknown): VistaPropertySnapshot {
-  const result = vistaPropertySchema.safeParse(raw);
+  const input = raw && typeof raw === "object" && !Array.isArray(raw)
+    ? { ...raw, fotos: extractVistaPhotos(raw as Record<string, unknown>) }
+    : raw;
+  const result = vistaPropertySchema.safeParse(input);
   if (!result.success) throw new VistaMappingError("Resposta do Vista não contém os campos mínimos confirmados.", {
     issues: result.error.issues.map((issue) => ({ path: issue.path.join("."), code: issue.code })),
   });
@@ -82,6 +86,12 @@ export function parseVistaPropertySnapshot(raw: unknown): VistaPropertySnapshot 
 export function normalizeVistaCommercialData(raw: unknown, fetchedAt = new Date(), allowedImageHostname?: string): PropertyCommercialData {
   const snapshot = parseVistaPropertySnapshot(raw);
   const cover = httpsImage(snapshot.FotoDestaque, "Imagem de destaque do imóvel", allowedImageHostname);
+  const gallery = snapshot.fotos.flatMap((photo) => {
+    const image = httpsImage(photo.Foto ?? photo.FotoPequena, photo.Descricao?.trim() || "Fotografia do imóvel", allowedImageHostname);
+    return image ? [image] : [];
+  });
+  const images = [cover, ...gallery].filter((image): image is NonNullable<typeof image> => image !== null)
+    .filter((image, index, all) => all.findIndex((candidate) => candidate.url === image.url) === index);
   return {
     externalCode: snapshot.Codigo,
     rawCategory: snapshot.Categoria,
@@ -99,7 +109,7 @@ export function normalizeVistaCommercialData(raw: unknown, fetchedAt = new Date(
     suites: snapshot.Suites,
     parkingSpaces: snapshot.Vagas,
     coverImageUrl: cover?.url,
-    images: cover ? [cover] : [],
+    images,
     characteristics: snapshot.Caracteristicas,
     infrastructure: snapshot.InfraEstrutura,
     availabilityStatus: "UNKNOWN",

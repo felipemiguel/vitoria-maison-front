@@ -36,7 +36,7 @@ export function analyzePhotoFields(payload: unknown): {
   const detail = extractVistaDetail(payload) ?? {};
   const urls: unknown[] = [];
   if (detail.FotoDestaque) urls.push(detail.FotoDestaque);
-  const photos = Array.isArray(detail.fotos) ? detail.fotos.filter(isRecord) : [];
+  const photos = extractVistaPhotos(detail);
   for (const photo of photos) { urls.push(photo.Foto, photo.FotoPequena); }
   const validUrls = urls.filter((value): value is string => typeof value === "string" && value.length > 0);
   const absoluteHttps = validUrls.filter((value) => { try { return new URL(value).protocol === "https:"; } catch { return false; } }).length;
@@ -48,6 +48,14 @@ export function analyzePhotoFields(payload: unknown): {
     smallImages: photos.filter((photo) => typeof photo.FotoPequena === "string" && photo.FotoPequena.length > 0).length,
     descriptions: photos.filter((photo) => typeof photo.Descricao === "string" && photo.Descricao.length > 0).length,
   };
+}
+
+// A relação Foto chega como objeto indexado por código nesta instância.
+export function extractVistaPhotos(detail: Record<string, unknown>): Record<string, unknown>[] {
+  const source = detail.Foto ?? detail.fotos;
+  if (Array.isArray(source)) return source.filter(isRecord);
+  if (isRecord(source)) return Object.values(source).filter(isRecord);
+  return [];
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

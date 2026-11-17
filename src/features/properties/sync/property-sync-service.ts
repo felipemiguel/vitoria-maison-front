@@ -1,5 +1,5 @@
 import type { VistaClient } from "@/integrations/vista/vista-types";
-import { VISTA_DETAIL_FIELDS } from "@/integrations/vista/vista-fields";
+import { VISTA_DETAIL_FIELDS, VISTA_DETAIL_PHOTO_FIELDS } from "@/integrations/vista/vista-fields";
 import { extractVistaDetail } from "@/integrations/vista/vista-response";
 import { normalizeVistaCommercialData } from "@/integrations/vista/vista-mapper";
 import { VistaError, VistaMappingError, sanitizeForLog, toSanitizedError } from "@/integrations/vista/vista-errors";
@@ -11,7 +11,7 @@ export class PropertySyncService {
   async addAndSync(code: string): Promise<{ created: boolean; result: SyncResult }> {
     const runId = await this.store.startRun();
     try {
-      const normalized = await this.fetchNormalized(code);
+      const normalized = await this.fetchNormalized(code, galleryContext());
       const { selection, created } = await this.store.ensureCurated(code);
       await this.store.saveSnapshot(selection.id, normalized);
       await this.store.finishRun(runId, { status: "SUCCESS", totalProcessed: 1, totalSuccess: 1, totalFailed: 0 });
@@ -26,12 +26,12 @@ export class PropertySyncService {
   }
 
   async preview(code: string): Promise<ReturnType<typeof normalizeVistaCommercialData>> {
-    return this.fetchNormalized(code);
+    return this.fetchNormalized(code, galleryContext());
   }
 
   async syncOne(code: string): Promise<SyncResult> {
     const runId = await this.store.startRun();
-    const result = await this.processCode(code);
+    const result = await this.processCode(code, galleryContext());
     await this.store.finishRun(runId, {
       status: result.status === "SUCCESS" ? "SUCCESS" : "FAILED",
       totalProcessed: 1, totalSuccess: result.status === "SUCCESS" ? 1 : 0,
@@ -43,7 +43,8 @@ export class PropertySyncService {
   async syncAll(): Promise<SyncResult[]> {
     const selections = await this.store.listCurated();
     const runId = await this.store.startRun();
-    const results = await mapWithConcurrency(selections.map((item) => item.vistaCode), this.concurrency, (code) => this.processCode(code));
+    const context = galleryContext();
+    const results = await mapWithConcurrency(selections.map((item) => item.vistaCode), this.concurrency, (code) => this.processCode(code, context));
     const success = results.filter((result) => result.status === "SUCCESS").length;
     const failed = results.length - success;
     await this.store.finishRun(runId, {
@@ -54,11 +55,11 @@ export class PropertySyncService {
     return results;
   }
 
-  private async processCode(code: string): Promise<SyncResult> {
+  private async processCode(code: string, context: GalleryContext): Promise<SyncResult> {
     const selection = await this.store.findCuratedByCode(code);
     if (!selection) return { code, status: "NOT_FOUND", message: "Código não selecionado em curated_properties." };
     try {
-      const normalized = await this.fetchNormalized(code);
+      const normalized = await this.fetchNormalized(code, context);
       await this.store.saveSnapshot(selection.id, normalized);
       return { code, status: "SUCCESS" };
     } catch (error) {
@@ -68,15 +69,28 @@ export class PropertySyncService {
     }
   }
 
-  private async fetchNormalized(code: string) {
+  private async fetchNormalized(code: string, context: GalleryContext) {
     const response = await this.vista.getPropertyDetails(code, { fields: VISTA_DETAIL_FIELDS, showInternal: true });
-    const detail = extractVistaDetail(response);
+    let detail = extractVistaDetail(response);
     if (!detail) throw new VistaMappingError("Vista não retornou um imóvel para o código.", { kind: "NOT_FOUND" });
+    if (detail.Foto === undefined && detail.fotos === undefined && !context.unavailable) {
+      try {
+        const galleryResponse = await this.vista.getPropertyDetails(code, { fields: VISTA_DETAIL_PHOTO_FIELDS, showInternal: true });
+        const galleryDetail = extractVistaDetail(galleryResponse);
+        if (galleryDetail) detail = { ...detail, Foto: galleryDetail.Foto, fotos: galleryDetail.fotos };
+      } catch (error) {
+        if (error instanceof VistaError && error.code === "HTTP" && error.details.status === 400) context.unavailable = true;
+        console.warn(JSON.stringify(sanitizeForLog({ level: "warn", event: "property.sync.gallery_unavailable", propertyCode: code, error: toSanitizedError(error) })));
+      }
+    }
     // O identificador aceito por `imovel` pode ser o ID interno retornado pela
     // listagem, enquanto `Codigo` no detalhe é o código comercial da imobiliária.
     return normalizeVistaCommercialData(detail, new Date(), this.imageHostname);
   }
 }
+
+type GalleryContext = { unavailable: boolean };
+function galleryContext(): GalleryContext { return { unavailable: false }; }
 
 function logSyncFailure(code: string, error: unknown): void {
   const cause=error instanceof Error&&error.cause instanceof Error?toSanitizedError(error.cause):undefined;
