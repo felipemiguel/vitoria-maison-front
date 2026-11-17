@@ -350,7 +350,7 @@ const bytea = customType<{ data: Buffer; driverData: Buffer }>({ dataType: () =>
 /** Mídia enviada pelo painel, armazenada no PostgreSQL. Sempre WebP já tratado pelo servidor. */
 export const mediaAssets = pgTable("media_assets", {
   id: uuid("id").primaryKey().defaultRandom(),
-  kind: varchar("kind", { length: 40 }).$type<"BROKER_PROFILE_PHOTO" | "BROKER_SITE_HERO">().notNull(),
+  kind: varchar("kind", { length: 40 }).$type<"BROKER_PROFILE_PHOTO" | "BROKER_SITE_HERO" | "LANDING_PAGE_HERO">().notNull(),
   ownerUserId: uuid("owner_user_id").notNull().references(() => adminUsers.id, { onDelete: "cascade" }),
   contentType: varchar("content_type", { length: 60 }).$type<"image/webp">().notNull(),
   bytes: bytea("bytes").notNull(),
@@ -362,3 +362,32 @@ export const mediaAssets = pgTable("media_assets", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [index("media_assets_owner_idx").on(table.ownerUserId, table.kind)]);
 
+
+export type LandingPageStatus = "DRAFT" | "PUBLISHED" | "ARCHIVED";
+
+/** Landing page de um imóvel. Textos e blocos aqui; dados comerciais sempre do snapshot. */
+export const landingPages = pgTable("landing_pages", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  slug: varchar("slug", { length: 80 }).notNull(),
+  name: varchar("name", { length: 120 }).notNull(),
+  curatedPropertyId: uuid("curated_property_id").notNull().references(() => curatedProperties.id, { onDelete: "restrict" }),
+  status: varchar("status", { length: 20 }).$type<LandingPageStatus>().notNull().default("DRAFT"),
+  content: jsonb("content").$type<Record<string, unknown>>().notNull().default(sql`'{}'::jsonb`),
+  heroImageAssetId: uuid("hero_image_asset_id").references(() => mediaAssets.id, { onDelete: "set null" }),
+  whatsappNumber: varchar("whatsapp_number", { length: 20 }),
+  whatsappMessage: varchar("whatsapp_message", { length: 300 }),
+  seoTitle: varchar("seo_title", { length: 70 }),
+  seoDescription: varchar("seo_description", { length: 170 }),
+  firstPublishedAt: timestamp("first_published_at", { withTimezone: true }),
+  publishedAt: timestamp("published_at", { withTimezone: true }),
+  publishedBy: uuid("published_by").references(() => adminUsers.id, { onDelete: "set null" }),
+  version: integer("version").notNull().default(0),
+  createdBy: uuid("created_by").references(() => adminUsers.id, { onDelete: "set null" }),
+  updatedBy: uuid("updated_by").references(() => adminUsers.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  uniqueIndex("landing_pages_slug_unique").on(table.slug),
+  index("landing_pages_property_idx").on(table.curatedPropertyId),
+  index("landing_pages_status_idx").on(table.status, table.updatedAt),
+]);

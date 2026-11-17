@@ -22,6 +22,12 @@ describe("matriz de permissões", () => {
     for (const permission of ["users:read", "users:create", "users:update", "users:deactivate", "users:assign-roles"] as const) expect(hasPermission(manager, permission)).toBe(false);
   });
 
+  it("landing pages: ADMIN e MANAGER gerenciam; BROKER não", () => {
+    expect(hasPermission(user("ADMIN"), "landing-pages:manage")).toBe(true);
+    expect(hasPermission(user("MANAGER"), "landing-pages:manage")).toBe(true);
+    expect(hasPermission(user("BROKER"), "landing-pages:manage")).toBe(false);
+  });
+
   it("BROKER só gerencia a própria conta: não importa imóveis nem vê leads gerais", () => {
     const broker = user("BROKER");
     expect([...effectivePermissions(broker)].sort()).toEqual(["account:manage-own", "broker-profile:read-own", "broker-profile:update-own", "broker-site:create-own", "broker-site:read-own", "broker-site:submit-review", "broker-site:update-own", "leads:read-own"]);
@@ -67,6 +73,8 @@ describe("navegação por permissões", () => {
     expect(hrefs("MANAGER")).toContain("/admin/leads");
     expect(hrefs("BROKER")).toEqual(["/admin/meu-site", "/admin/meu-site/leads", "/admin/minha-conta"]);
     expect(hrefs("MANAGER")).not.toContain("/admin/meu-site/leads");
+    expect(hrefs("MANAGER")).toContain("/admin/landing-pages");
+    expect(hrefs("BROKER")).not.toContain("/admin/landing-pages");
     expect(hrefs("ADMIN")).toContain("/admin/sites-corretores");
     expect(hrefs("ADMIN")).not.toContain("/admin/meu-site");
     expect(hrefs("MANAGER")).not.toContain("/admin/sites-corretores");

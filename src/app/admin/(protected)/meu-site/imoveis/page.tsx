@@ -6,7 +6,7 @@ import { loadMySite } from "@/features/brokers/my-site";
 import { MAX_FEATURED_PROPERTIES, MAX_SELECTED_PROPERTIES } from "@/features/brokers/broker-site-service";
 import { propertyRepository } from "@/features/properties/services/property-service";
 import type { PropertyFilters, PropertyPurpose, PropertyType } from "@/features/properties/types";
-import { PROPERTY_TYPE_LABEL } from "@/features/seo/property-seo";
+import { PROPERTY_TYPE_LABEL, propertyTypeLabel } from "@/features/seo/property-seo";
 import { formatPrice } from "@/lib/format";
 import { AddPropertiesForm, SelectionRow } from "@/components/admin/brokers/broker-forms";
 import { SafeImage } from "@/components/property/safe-image";
@@ -69,7 +69,7 @@ export default async function MySitePropertiesPage({ searchParams }: { searchPar
           <div className="relative aspect-[4/3] bg-[#e9e4df]">{property.editorial.images[0] && <SafeImage src={property.editorial.images[0].url} alt={property.editorial.images[0].alt} fill sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw" className="object-cover"/>}
             {!isSelected && !suspended && <label className="absolute left-3 top-3 grid size-9 cursor-pointer place-items-center rounded-full bg-white shadow"><input type="checkbox" name="ids" value={property.id} className="size-4 accent-[#66142e]"/><span className="sr-only">Selecionar {property.editorial.title}</span></label>}
             {isSelected && <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-[#66142e] px-2.5 py-1 text-xs font-semibold text-white"><Check size={13}/> Na seleção</span>}</div>
-          <div className="space-y-1 p-4 text-sm"><p className="text-[11px] font-semibold uppercase tracking-[.12em] text-[#9b6a2f]">Código {c.code} · {PROPERTY_TYPE_LABEL[c.type]}</p><p className="truncate font-medium">{property.editorial.title}</p><p className="text-xs text-[#746c67]">{property.location.neighborhood}, {property.location.city}</p>
+          <div className="space-y-1 p-4 text-sm"><p className="text-[11px] font-semibold uppercase tracking-[.12em] text-[#9b6a2f]">Código {c.code} · {propertyTypeLabel(c.type)}</p><p className="truncate font-medium">{property.editorial.title}</p><p className="text-xs text-[#746c67]">{property.location.neighborhood}, {property.location.city}</p>
             <p className="text-xs text-[#5f5652]">{formatPrice(c.price)} · {c.area} m²{c.bedrooms ? ` · ${c.bedrooms} dorm.` : ""} · {PURPOSES[c.purpose]}</p><p className="text-xs text-emerald-700">Disponível na Maison</p>
             {!isSelected && !suspended && <button name="single" value={property.id} className="mt-2 w-full rounded-lg border border-[#66142e] px-3 py-2 text-sm font-semibold text-[#66142e] hover:bg-[#f7f2ee]">Adicionar ao site</button>}</div>
         </article>;

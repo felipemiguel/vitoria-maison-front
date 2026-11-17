@@ -30,6 +30,7 @@ describe("operações de imóveis exigem permissão no servidor", () => {
     const novo = await import("./(protected)/imoveis/novo/actions");
     const vista = await import("./(protected)/vista/actions");
     const imovel = await import("./(protected)/imoveis/[id]/actions");
+    const imoveis = await import("./(protected)/imoveis/actions");
     const destaques = await import("./(protected)/destaques/actions");
     expect(await novo.previewPropertyAction({}, form({ code: "31" }))).toMatchObject({ error: FORBIDDEN });
     expect(await novo.importPropertyAction({}, form({ code: "31" }))).toEqual({ error: FORBIDDEN });
@@ -40,6 +41,7 @@ describe("operações de imóveis exigem permissão no servidor", () => {
     expect(await imovel.unpublishPropertyAction({}, form(target))).toEqual({ error: FORBIDDEN });
     expect(await imovel.confirmAvailabilityAction({}, form(target))).toEqual({ error: FORBIDDEN });
     expect(await imovel.syncPropertyAction({}, form(target))).toEqual({ error: FORBIDDEN });
+    expect(await imoveis.syncAllPropertiesAction()).toEqual({ error: FORBIDDEN });
     expect(await imovel.updateEditorialAction({}, form(target))).toEqual({ error: FORBIDDEN });
     expect(await imovel.updateFeaturedAction({}, form(target))).toEqual({ error: FORBIDDEN });
     expect(await imovel.saveAndPublishPropertyAction({}, form(target))).toEqual({ error: FORBIDDEN });
@@ -186,3 +188,28 @@ describe("leads por corretor (6.4D)", () => {
   });
 });
 
+
+describe("landing pages", () => {
+  it("BROKER não cria, edita, publica, duplica nem envia imagem; páginas negadas", async () => {
+    as("BROKER");
+    const lp = await import("./(protected)/landing-pages/actions");
+    expect(await lp.createLandingPageAction({}, form({ name: "Campanha", vistaCode: "31" }))).toEqual({ error: FORBIDDEN });
+    expect(await lp.saveLandingSettingsAction({}, form({ id: uuid, version: "0", name: "Campanha" }))).toEqual({ error: FORBIDDEN });
+    expect(await lp.saveLandingContentAction({}, form({ id: uuid, version: "0", content: "{\"blocks\":[]}" }))).toEqual({ error: FORBIDDEN });
+    expect(await lp.changeLandingStatusAction({}, form({ id: uuid, version: "0", operation: "publish" }))).toEqual({ error: FORBIDDEN });
+    expect(await lp.duplicateLandingPageAction({}, form({ id: uuid }))).toEqual({ error: FORBIDDEN });
+    expect(await lp.removeLandingHeroAction({}, form({ id: uuid }))).toEqual({ error: FORBIDDEN });
+    const list = await import("./(protected)/landing-pages/page");
+    expect(await digest(list.default({ searchParams: Promise.resolve({}) }))).toContain("/admin/acesso-negado");
+    const preview = await import("./(protected)/landing-pages/[id]/previa/page");
+    expect(await digest(preview.default({ params: Promise.resolve({ id: uuid }) }))).toContain("/admin/acesso-negado");
+  });
+
+  it("sem sessão nenhuma ação é executada; origem diferente é recusada", async () => {
+    state.roles = null;
+    const lp = await import("./(protected)/landing-pages/actions");
+    expect(await lp.changeLandingStatusAction({}, form({ id: uuid, version: "0", operation: "publish" }))).toEqual({ error: "Sua sessão expirou. Entre novamente." });
+    as("ADMIN"); state.origin = "https://malicioso.test";
+    expect((await lp.changeLandingStatusAction({}, form({ id: uuid, version: "0", operation: "publish" }))).error).toMatch(/Requisição inválida/);
+  });
+});

@@ -23,11 +23,11 @@ Não foi encontrado na documentação pública nem confirmado para a chave atual
 ## Estados separados
 
 - `property_snapshots.availability_status`: informação comercial normalizada do Vista (`AVAILABLE`, `UNAVAILABLE`, `UNKNOWN`).
-- Confirmação manual: atestado temporário interno, com operador, origem, início e expiração.
+- Confirmação operacional: registrada pela sincronização bem-sucedida, com instante e origem `VISTA_SYNC`.
 - `curated_properties.published`: aprovação editorial solicitada.
 - Visibilidade pública: resultado calculado de todas as regras; não é uma flag isolada.
 
-Uma indisponibilidade futura explicitamente confirmada pelo Vista sempre prevalecerá sobre a confirmação manual. A sincronização nunca cria nem renova confirmações manuais.
+Uma indisponibilidade futura explicitamente confirmada pelo Vista sempre prevalecerá sobre a confirmação operacional. Cada sincronização bem-sucedida renova essa confirmação; sua atualidade é controlada pela idade máxima do próprio snapshot.
 
 ## Decisão de publicação
 
@@ -38,12 +38,12 @@ Uma indisponibilidade futura explicitamente confirmada pelo Vista sempre prevale
 - snapshot ausente, inválido ou mais antigo que `PUBLICATION_SNAPSHOT_MAX_AGE_HOURS`;
 - finalidade editorial ausente;
 - preço da finalidade ausente ou não positivo;
-- estado padrão, título, área privativa ou categoria pública ausente;
+- estado padrão, título ou área privativa ausente;
 - imagem HTTPS válida ausente;
 - Vista informa `UNAVAILABLE`;
-- Vista retorna `UNKNOWN` e não existe confirmação manual completa e vigente.
+- Vista retorna `UNKNOWN` e não existe confirmação operacional gerada por sincronização bem-sucedida.
 
-Na chave atual, a confirmação manual vale por `AVAILABILITY_CONFIRMATION_TTL_DAYS` (padrão: sete dias). Ao expirar, o predicado SQL remove automaticamente o imóvel de catálogo, home, coleções, busca, detalhe e sitemap, mesmo com `published=true`.
+Não existe uma segunda expiração exclusiva para disponibilidade. O predicado SQL remove o imóvel de catálogo, home, coleções, busca, detalhe e sitemap quando o snapshot ultrapassa `PUBLICATION_SNAPSHOT_MAX_AGE_HOURS`, mesmo com `published=true`.
 
 ## Operação segura
 
@@ -63,5 +63,5 @@ As mesmas operações estão disponíveis no detalhe administrativo. O administr
 
 - A galeria completa ainda não está liberada para a chave; somente `FotoDestaque` foi confirmada.
 - `Finalidade=Residencial` não distingue venda/locação.
-- A disponibilidade depende de confirmação manual temporária até o Vista liberar e documentar um campo confiável.
+- Enquanto o Vista não liberar um campo inequívoco, uma resposta válida de sincronização confirma operacionalmente a disponibilidade; a origem `VISTA_SYNC` deixa essa decisão auditável.
 - Não há painel administrativo, autenticação administrativa ou cron nesta fase.

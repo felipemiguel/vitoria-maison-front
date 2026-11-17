@@ -1,13 +1,14 @@
-import { and, asc, count, desc, eq, ilike, inArray, isNull, lte, or, sql, type SQL } from "drizzle-orm";
+import { and, asc, count, desc, eq, ilike, inArray, isNull, or, sql, type SQL } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import { z } from "zod";
 import * as schema from "@/database/schema";
-import { collectionProperties, collections, curatedProperties, propertySnapshots, syncRuns } from "@/database/schema";
+import { adminAuditEvents, collectionProperties, collections, curatedProperties, propertySnapshots, syncRuns } from "@/database/schema";
 import type { PropertySyncService } from "@/features/properties/sync/property-sync-service";
 import type { PropertyPublicationService } from "@/features/properties/publication/property-publication-service";
 import { publicVisibilityConditions } from "@/features/properties/publication/property-publication-policy";
 import type { PublicationPolicyConfig } from "@/features/properties/config";
 import type { AdminDashboardStats, AdminPropertyDetails, AdminPropertyFilters, AdminPropertyPage, AdminPropertySummary, ImportResult, VistaPropertyPreviewResult } from "./types";
+import type { VistaImportPurpose } from "../vista-explorer/types";
 
 const codeSchema = z.string().trim().min(1).max(80).regex(/^[\p{L}\p{N}._-]+$/u);
 const idSchema = z.string().uuid();
@@ -90,6 +91,37 @@ export class AdminPropertyService {
     return { status: result.created ? "IMPORTED" : "DUPLICATE", id: created.id, vistaCode: normalized };
   }
 
+  async prepareImportedDraft(input: { id: string; code: string; purpose: VistaImportPurpose; adminUserId: string }): Promise<void> {
+    const id = idSchema.parse(input.id);
+    const code = codeSchema.parse(input.code);
+    const purpose = z.enum(["SALE", "RENT"]).parse(input.purpose);
+    const now = this.now();
+    await this.db.transaction(async (tx) => {
+      const row = (await tx.select({ curated: curatedProperties, snapshot: propertySnapshots }).from(curatedProperties)
+        .innerJoin(propertySnapshots, eq(propertySnapshots.curatedPropertyId, curatedProperties.id))
+        .where(and(eq(curatedProperties.id, id), eq(curatedProperties.vistaCode, code))).limit(1))[0];
+      if (!row) throw new Error("O imóvel importado não possui snapshot comercial válido.");
+      if (row.curated.published) throw new Error("Um imóvel já publicado não pode receber os padrões da importação.");
+      const price = purpose === "SALE" ? row.snapshot.salePrice : row.snapshot.rentalPrice;
+      if (!price || Number(price) <= 0) throw new Error(purpose === "SALE" ? "O imóvel não possui preço de venda válido." : "O imóvel não possui preço de locação válido.");
+      if (row.snapshot.availabilityStatus === "UNAVAILABLE") throw new Error("O Vista informou que este imóvel está indisponível.");
+      const changed = await tx.update(curatedProperties).set({
+        publicationPurpose: purpose,
+        publicationVersion: sql`${curatedProperties.publicationVersion} + 1`,
+        updatedAt: now,
+      }).where(and(eq(curatedProperties.id, id), eq(curatedProperties.publicationVersion, row.curated.publicationVersion))).returning({ id: curatedProperties.id });
+      if (!changed[0]) throw new Error("O imóvel foi alterado simultaneamente; revise o rascunho.");
+      await tx.insert(adminAuditEvents).values({
+        adminUserId: input.adminUserId,
+        entityType: "PROPERTY",
+        entityId: id,
+        action: "IMPORT_DEFAULTS_APPLIED",
+        beforeState: { purpose: row.curated.publicationPurpose },
+        afterState: { purpose, availability: row.snapshot.availabilityStatus, published: false },
+      });
+    });
+  }
+
   async getDashboardStats(): Promise<AdminDashboardStats> {
     const now = this.now();
     const visible = publicVisibilityConditions(now, this.policyConfig);
@@ -97,7 +129,7 @@ export class AdminPropertyService {
       this.db.select({ value: count() }).from(curatedProperties),
       this.db.select({ value: count() }).from(curatedProperties).where(eq(curatedProperties.published, true)),
       this.db.select({ value: count() }).from(curatedProperties).leftJoin(propertySnapshots, eq(propertySnapshots.curatedPropertyId, curatedProperties.id))
-        .where(or(eq(propertySnapshots.availabilityStatus, "UNKNOWN"), and(eq(propertySnapshots.availabilityStatus, "UNKNOWN"), lte(curatedProperties.availabilityExpiresAt, now)), isNull(propertySnapshots.id))),
+        .where(or(and(eq(propertySnapshots.availabilityStatus, "UNKNOWN"), isNull(curatedProperties.availabilityConfirmedAt)), isNull(propertySnapshots.id))),
       this.db.select({ value: count() }).from(curatedProperties).where(eq(curatedProperties.lastSyncStatus, "FAILED")),
       this.db.select({ value: count() }).from(curatedProperties).innerJoin(propertySnapshots, eq(propertySnapshots.curatedPropertyId, curatedProperties.id)).where(and(...visible)),
       this.db.select().from(syncRuns).orderBy(desc(syncRuns.startedAt)).limit(5),
@@ -121,8 +153,7 @@ export class AdminPropertyService {
     if (filters.publication) conditions.push(eq(curatedProperties.published, filters.publication === "PUBLISHED"));
     if (filters.syncStatus) conditions.push(eq(curatedProperties.lastSyncStatus, filters.syncStatus));
     if (filters.featured !== undefined) conditions.push(eq(curatedProperties.featured, filters.featured));
-    if (filters.availability === "EXPIRED") conditions.push(and(eq(propertySnapshots.availabilityStatus, "UNKNOWN"), lte(curatedProperties.availabilityExpiresAt, this.now()))!);
-    else if (filters.availability) conditions.push(eq(propertySnapshots.availabilityStatus, filters.availability));
+    if (filters.availability) conditions.push(eq(propertySnapshots.availabilityStatus, filters.availability));
     return conditions;
   }
 
@@ -143,7 +174,7 @@ export class AdminPropertyService {
       coverImageUrl: row.curated.editorialCoverUrl ?? snapshot?.coverImageUrl ?? null,
       salePrice: snapshot?.salePrice ?? null, rentalPrice: snapshot?.rentalPrice ?? null,
       publicationPurpose: row.curated.publicationPurpose, published: row.curated.published, publiclyEligible,
-      availabilityStatus: snapshot?.availabilityStatus ?? "UNKNOWN", availabilityExpiresAt: row.curated.availabilityExpiresAt,
+      availabilityStatus: snapshot?.availabilityStatus ?? "UNKNOWN", availabilityConfirmedAt: row.curated.availabilityConfirmedAt, availabilityExpiresAt: row.curated.availabilityExpiresAt,
       lastSyncStatus: row.curated.lastSyncStatus, lastSyncAttemptAt: row.curated.lastSyncAttemptAt,
     };
   }

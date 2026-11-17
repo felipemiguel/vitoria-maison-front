@@ -26,6 +26,12 @@ export async function processPresentationImage(input: Buffer): Promise<Processed
   return processImage(input, PRESENTATION_OUTPUT);
 }
 
+/** Topo de landing page: horizontal 16:9 (1920×1080), recorte com foco no assunto. */
+export const LANDING_HERO_OUTPUT = { width: 1920, height: 1080, quality: 80, minSide: 700 } as const;
+export async function processLandingHeroImage(input: Buffer): Promise<ProcessedImage> {
+  return processImage(input, LANDING_HERO_OUTPUT);
+}
+
 async function processImage(input: Buffer, output: { width: number; height: number; quality: number; minSide?: number }): Promise<ProcessedImage> {
   const minSide = output.minSide ?? 400;
   if (!input.length) throw new InvalidImageError("Selecione uma imagem.");

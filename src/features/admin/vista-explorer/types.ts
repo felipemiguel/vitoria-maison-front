@@ -1,6 +1,10 @@
 import type { AvailabilityStatus, PropertyCommercialData } from "@/features/properties/types";
 
+export type VistaImportPurpose = "SALE" | "RENT";
+export type VistaExplorerPurpose = "ALL" | VistaImportPurpose;
+
 export type VistaExplorerFilters = {
+  purpose: VistaExplorerPurpose;
   code?: string;
   city?: string;
   neighborhood?: string;

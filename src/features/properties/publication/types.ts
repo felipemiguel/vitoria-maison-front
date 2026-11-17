@@ -1,4 +1,4 @@
-import type { AvailabilityStatus, PropertyPurpose, PropertyType } from "../types";
+import type { AvailabilityStatus, PropertyPurpose } from "../types";
 
 export type PublicationDecision = { allowed: boolean; reasons: string[] };
 
@@ -36,8 +36,6 @@ export type ManualAvailabilityConfirmation = {
   confirmedBy: string;
   source: "MANUAL_CLI" | "MANUAL_ADMIN";
 };
-
-export const supportedPublicationTypes: readonly PropertyType[] = ["APARTMENT", "FLAT", "STUDIO", "PENTHOUSE"];
 
 export interface PropertyPublicationStore {
   load(code: string): Promise<PublicationRecord | null>;

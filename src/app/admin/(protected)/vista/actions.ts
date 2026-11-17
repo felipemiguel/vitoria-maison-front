@@ -25,9 +25,10 @@ export async function bulkImportPropertiesAction(_previous: BulkImportActionStat
     const codesValue = formData.get("codes");
     const codes = typeof codesValue === "string" ? JSON.parse(codesValue) : null;
     const idempotencyKey = formData.get("idempotencyKey");
+    const purpose = formData.get("purpose");
     const { admin, bulkImport } = await getAuthorizedAdminServices("properties:import");
     await enforceAdminVistaRateLimit(admin.id);
-    const result = await bulkImport.execute({ codes, idempotencyKey }, admin.id);
+    const result = await bulkImport.execute({ codes, purpose, idempotencyKey }, admin.id);
     revalidatePath("/admin/vista");
     revalidatePath("/admin/imoveis");
     return { result };

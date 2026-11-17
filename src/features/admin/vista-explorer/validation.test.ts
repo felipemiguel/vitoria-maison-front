@@ -3,7 +3,7 @@ import { buildVistaFilters, bulkImportInputSchema, parseExplorerFilters } from "
 
 describe("Vista explorer validation", () => {
   it("normaliza paginação e filtros da URL", () => {
-    expect(parseExplorerFilters({ page: "2", pageSize: "50", city: " São Paulo ", view: "list" })).toMatchObject({ page: 2, pageSize: 50, city: "São Paulo", view: "list" });
+    expect(parseExplorerFilters({ page: "2", pageSize: "50", city: " São Paulo ", view: "list" })).toMatchObject({ purpose: "ALL", page: 2, pageSize: 50, city: "São Paulo", view: "list" });
   });
 
   it("converte filtros somente para campos permitidos do Vista", () => {
@@ -13,6 +13,10 @@ describe("Vista explorer validation", () => {
 
   it("rejeita faixa invertida e lote maior que vinte", () => {
     expect(() => parseExplorerFilters({ minPrice: "10", maxPrice: "1" })).toThrow();
-    expect(() => bulkImportInputSchema.parse({ idempotencyKey: crypto.randomUUID(), codes: Array.from({ length: 21 }, (_, index) => String(index)) })).toThrow();
+    expect(() => bulkImportInputSchema.parse({ idempotencyKey: crypto.randomUUID(), purpose: "SALE", codes: Array.from({ length: 21 }, (_, index) => String(index)) })).toThrow();
+  });
+
+  it("usa a finalidade oficial do Vista para locação", () => {
+    expect(buildVistaFilters(parseExplorerFilters({ purpose: "RENT" }))).toEqual({ filter: { Finalidade: "Locacao" } });
   });
 });

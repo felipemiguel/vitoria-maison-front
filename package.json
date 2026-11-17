@@ -13,6 +13,7 @@
     "vista:test:list": "node --import tsx scripts/vista/test-list.ts",
     "vista:test:details": "node --import tsx scripts/vista/test-details.ts",
     "vista:test:report": "node --import tsx scripts/vista/test-report.ts",
+    "poc:vista-visibility": "node --import tsx scripts/vista/property-visibility.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "node --import tsx scripts/database/migrate.ts",
     "vista:sync": "node --import tsx scripts/sync/sync-one.ts",

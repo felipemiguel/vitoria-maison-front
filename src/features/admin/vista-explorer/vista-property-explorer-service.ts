@@ -25,6 +25,7 @@ export class VistaPropertyExplorerService {
       page: filters.page,
       pageSize: filters.pageSize,
       showTotal: true,
+      showInternal: true,
       ...vistaFilters,
       order: { Codigo: "asc" },
     });
@@ -37,7 +38,7 @@ export class VistaPropertyExplorerService {
   }
 
   async preview(code: string): Promise<VistaExplorerPreview> {
-    const payload = await this.vista.getPropertyDetails(code, { fields: VISTA_DETAIL_FIELDS });
+    const payload = await this.vista.getPropertyDetails(code, { fields: VISTA_DETAIL_FIELDS, showInternal: true });
     const detail = extractVistaDetail(payload);
     if (!detail) throw new Error("Imóvel não encontrado no Vista.");
     const property = normalizeVistaCommercialData(detail, this.now(), this.imageHostname);

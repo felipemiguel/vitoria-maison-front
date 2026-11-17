@@ -1,6 +1,6 @@
 import { hasPermission, type AccessSubject, type Permission } from "./permissions";
 
-export type AdminNavIcon = "dashboard" | "properties" | "vista" | "import" | "highlights" | "collections" | "leads" | "users" | "brokerSites" | "mySite" | "account";
+export type AdminNavIcon = "dashboard" | "properties" | "vista" | "import" | "highlights" | "collections" | "landingPages" | "leads" | "users" | "brokerSites" | "mySite" | "account";
 export type AdminNavItem = { href: string; label: string; icon: AdminNavIcon; permission: Permission };
 
 /** Itens do menu e a permissão exigida por cada um. O servidor filtra antes de enviar ao cliente. */
@@ -11,6 +11,7 @@ export const ADMIN_NAVIGATION: AdminNavItem[] = [
   { href: "/admin/imoveis/novo", label: "Importar por código", icon: "import", permission: "properties:import" },
   { href: "/admin/destaques", label: "Destaques", icon: "highlights", permission: "properties:edit" },
   { href: "/admin/colecoes", label: "Coleções", icon: "collections", permission: "collections:manage" },
+  { href: "/admin/landing-pages", label: "Landing pages", icon: "landingPages", permission: "landing-pages:manage" },
   { href: "/admin/leads", label: "Leads", icon: "leads", permission: "leads:read" },
   { href: "/admin/usuarios", label: "Usuários", icon: "users", permission: "users:read" },
   { href: "/admin/sites-corretores", label: "Sites de corretores", icon: "brokerSites", permission: "broker-site:manage-all" },

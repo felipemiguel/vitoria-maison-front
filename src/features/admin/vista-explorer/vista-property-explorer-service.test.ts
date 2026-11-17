@@ -9,10 +9,10 @@ describe("VistaPropertyExplorerService", () => {
   it("consulta uma página e identifica importados em lote", async () => {
     const vista: VistaClient = { listProperties: vi.fn(async () => ({ 0: record, total: 1, paginas: 1, pagina: 1, quantidade: 20 })), getPropertyDetails: vi.fn() };
     const statuses: VistaImportStatusStore = { findByCodes: vi.fn(async () => new Map([["31", { kind: "DRAFT" as const, id: "property-id" }]])) };
-    const result = await new VistaPropertyExplorerService(vista, statuses, "cdn.example.test").list(parseExplorerFilters({}));
+    const result = await new VistaPropertyExplorerService(vista, statuses, "cdn.example.test").list(parseExplorerFilters({ purpose: "SALE" }));
     expect(result.items[0]?.importStatus).toEqual({ kind: "DRAFT", id: "property-id" });
     expect(statuses.findByCodes).toHaveBeenCalledWith(["31"]);
-    expect(vista.listProperties).toHaveBeenCalledOnce();
+    expect(vista.listProperties).toHaveBeenCalledWith(expect.objectContaining({ showInternal: true, filter: { Finalidade: "Venda" } }));
   });
 
   it("propaga erro do Vista sem consultar status local", async () => {

@@ -43,7 +43,7 @@ integration("sites de corretores (PostgreSQL)", () => {
 
   afterAll(async () => pool.end());
   beforeEach(async () => {
-    await db.execute(sql`truncate table lead_delivery_attempts, lead_submissions, broker_site_properties, broker_sites, broker_profiles, media_assets, user_audit_events`);
+    await db.execute(sql`truncate table landing_pages, lead_delivery_attempts, lead_submissions, broker_site_properties, broker_sites, broker_profiles, media_assets, user_audit_events`);
     await db.delete(curatedProperties).where(like(curatedProperties.vistaCode, "BRK-%"));
     await db.execute(sql`truncate table user_roles`);
     await db.delete(adminUsers).where(like(adminUsers.email, "%@brokers.local"));

@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { getAuthorizedAdminPropertyService } from "@/features/admin/properties/admin-property-service-factory";
+import { getAuthorizedAdminPropertyService, getAuthorizedAdminServices } from "@/features/admin/properties/admin-property-service-factory";
 import type { VistaPropertyPreviewResult } from "@/features/admin/properties/types";
 import { VistaError } from "@/integrations/vista/vista-errors";
 import { requirePermission } from "@/features/access/server";
@@ -21,10 +21,15 @@ export async function previewPropertyAction(_previous: PreviewState, formData: F
 
 export type ImportState = { error?: string };
 export async function importPropertyAction(_previous: ImportState, formData: FormData): Promise<ImportState> {
-  const parsed = codeSchema.safeParse(formData.get("code"));
+  const parsed = z.object({ code: codeSchema, purpose: z.enum(["SALE", "RENT"]).catch("SALE") }).safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: "Código Vista inválido." };
   let result;
-  try { const admin=await requirePermission("properties:import");await enforceAdminVistaRateLimit(admin.id);result=await (await getAuthorizedAdminPropertyService("properties:import")).importVistaProperty(parsed.data); }
+  try {
+    const {admin,property}=await getAuthorizedAdminServices("properties:import");
+    await enforceAdminVistaRateLimit(admin.id);
+    result=await property.importVistaProperty(parsed.data.code);
+    if(result.status==="IMPORTED")await property.prepareImportedDraft({id:result.id,code:parsed.data.code,purpose:parsed.data.purpose,adminUserId:admin.id});
+  }
   catch(error){return {error:publicVistaError(error)}}
   redirect(`/admin/imoveis/${result.id}${result.status==="DUPLICATE"?"?duplicado=1":"?importado=1"}`);
 }

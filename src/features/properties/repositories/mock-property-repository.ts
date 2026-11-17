@@ -6,6 +6,7 @@ export class MockPropertyRepository implements PropertyRepository {
     // Conteúdo mock nunca alimenta sites de corretores.
     if (filters.brokerSiteId) return { items: [], total: 0, page: filters.page ?? 1, pageSize: filters.pageSize ?? 9, pages: 1 };
     let items = mockProperties.filter((p) => p.curation.published);
+    if (filters.ids) items = items.filter((p) => filters.ids!.includes(p.id));
     if (filters.slug) items = items.filter((p) => p.slug === filters.slug);
     if (filters.vistaCode) items = items.filter((p) => p.commercial.code.toLowerCase() === filters.vistaCode!.toLowerCase());
     if (filters.purpose) items = items.filter((p) => p.commercial.purpose === filters.purpose);

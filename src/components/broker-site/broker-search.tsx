@@ -1,5 +1,5 @@
 import type { PropertyFacets } from "@/features/properties/types";
-import { PROPERTY_TYPE_LABEL } from "@/features/seo/property-seo";
+import { propertyTypeLabel } from "@/features/seo/property-seo";
 
 const PURPOSE_LABEL = { SALE: "Comprar", RENT: "Alugar", INVESTMENT: "Investir" } as const;
 const SORT_OPTIONS = [["", "Minha ordem"], ["price-asc", "Menor preço"], ["price-desc", "Maior preço"], ["area-desc", "Maior área"]] as const;
@@ -17,7 +17,7 @@ export function BrokerSearch({ facets, action, values = {}, withSort = false, co
   const fields: React.ReactNode[] = [];
   if (facets.purposes.length > 1) fields.push(<label key="p" className={field}><span className={label}>Finalidade</span><select name="finalidade" defaultValue={values.finalidade ?? ""} className={select}><option value="">Todas</option>{facets.purposes.map((purpose) => <option key={purpose} value={purpose}>{PURPOSE_LABEL[purpose]}</option>)}</select></label>);
   if (facets.neighborhoods.length > 1) fields.push(<label key="b" className={field}><span className={label}>Bairro</span><select name="bairro" defaultValue={values.bairro ?? ""} className={select}><option value="">Todos os bairros</option>{facets.neighborhoods.map((neighborhood) => <option key={neighborhood} value={neighborhood}>{neighborhood}</option>)}</select></label>);
-  if (facets.types.length > 1) fields.push(<label key="t" className={field}><span className={label}>Categoria</span><select name="tipo" defaultValue={values.tipo ?? ""} className={select}><option value="">Todas</option>{facets.types.map((type) => <option key={type} value={type}>{PROPERTY_TYPE_LABEL[type]}</option>)}</select></label>);
+  if (facets.types.length > 1) fields.push(<label key="t" className={field}><span className={label}>Categoria</span><select name="tipo" defaultValue={values.tipo ?? ""} className={select}><option value="">Todas</option>{facets.types.map((type) => <option key={type} value={type}>{propertyTypeLabel(type)}</option>)}</select></label>);
   if (withSort) fields.push(<label key="o" className={field}><span className={label}>Ordenar</span><select name="ordem" defaultValue={values.ordem ?? ""} className={select}>{SORT_OPTIONS.map(([value, text]) => <option key={value} value={value}>{text}</option>)}</select></label>);
   if (!fields.length) return null;
   const columns = { 1: "md:grid-cols-[1fr_auto]", 2: "md:grid-cols-[1fr_1fr_auto]", 3: "md:grid-cols-[1fr_1fr_1fr_auto]", 4: "md:grid-cols-[1fr_1fr_1fr_1fr_auto]" }[fields.length as 1 | 2 | 3 | 4];

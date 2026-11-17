@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { vistaPropertyFixture } from "@/integrations/vista/__fixtures__/property";
 import type { VistaClient } from "@/integrations/vista/vista-types";
 import type { PropertyCommercialData } from "../types";
@@ -24,8 +24,10 @@ const vista = (response: unknown): VistaClient => ({ listProperties: async () =>
 describe("PropertySyncService", () => {
   it("gera prévia sem criar curadoria ou snapshot", async () => {
     const store = new MemoryStore();
-    const preview = await new PropertySyncService(vista(vistaPropertyFixture), store).preview("VM-TESTE-01");
+    const getPropertyDetails = vi.fn(async () => vistaPropertyFixture);
+    const preview = await new PropertySyncService({ listProperties: async () => [], getPropertyDetails }, store).preview("VM-TESTE-01");
     expect(preview.externalCode).toBe("VM-TESTE-01");
+    expect(getPropertyDetails).toHaveBeenCalledWith("VM-TESTE-01", expect.objectContaining({ showInternal: true }));
     expect(store.selections).toHaveLength(0);
     expect(store.snapshots).toHaveLength(0);
   });
@@ -81,5 +83,17 @@ describe("PropertySyncService", () => {
     const failing: VistaClient = { listProperties: async () => [], getPropertyDetails: async () => { throw new TypeError("network"); } };
     await expect(new PropertySyncService(failing, store).preview("1")).rejects.toThrow();
     expect(store.selections).toHaveLength(0);
+  });
+
+  it("sincroniza manualmente todos os imóveis já selecionados", async () => {
+    const store = new MemoryStore();
+    store.selections.set("31", { id: "id-31", vistaCode: "31", slug: "vista-31", published: false });
+    store.selections.set("32", { id: "id-32", vistaCode: "32", slug: "vista-32", published: false });
+    const getPropertyDetails = vi.fn(async (code: string) => ({ ...vistaPropertyFixture, Codigo: code }));
+    const results = await new PropertySyncService({ listProperties: async () => [], getPropertyDetails }, store, 2).syncAll();
+    expect(results).toEqual([{ code: "31", status: "SUCCESS" }, { code: "32", status: "SUCCESS" }]);
+    expect(getPropertyDetails).toHaveBeenCalledTimes(2);
+    expect(store.snapshots.has("id-31")).toBe(true);
+    expect(store.snapshots.has("id-32")).toBe(true);
   });
 });

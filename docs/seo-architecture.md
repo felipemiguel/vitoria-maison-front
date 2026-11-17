@@ -41,7 +41,7 @@ Os dados da organização no JSON-LD (telefones, e-mail, endereço e CRECI) vêm
 | `…?utm_*`, `gclid`, `fbclid`… | igual à rota sem os parâmetros | rota limpa | — |
 | Resultado vazio ou página inexistente | noindex, follow | rota base | não |
 | `/imoveis/[slug]` elegível | index | `/imoveis/[slug]` | sim |
-| `/imoveis/[slug]` inelegível (rascunho, indisponível, expirado, removido) | 404 | — | não |
+| `/imoveis/[slug]` inelegível (rascunho, indisponível, snapshot antigo, removido) | 404 | — | não |
 | `/colecoes` | index se houver ≥1 coleção com imóvel elegível | `/colecoes` | idem |
 | `/colecoes/[slug]` publicada com ≥1 imóvel | index | `/colecoes/[slug]` | sim |
 | `/colecoes/[slug]` publicada vazia | noindex, follow | idem | não |
@@ -69,7 +69,7 @@ Os dados da organização no JSON-LD (telefones, e-mail, endereço e CRECI) vêm
 ## Imóveis indisponíveis e slugs
 
 - A elegibilidade continua centralizada em `publicVisibilityConditions` (SQL derivado da política de publicação). Páginas, sitemap, coleções, metadata e redirecionamento do legado usam o mesmo predicado.
-- **Indisponível, expirado, despublicado ou removido → 404.** Não há página "indisponível" com dados comerciais desatualizados. O 404 é preferido ao 410 porque a indisponibilidade costuma ser temporária (confirmação expirada, snapshot antigo); quando o imóvel volta a ser elegível, a mesma URL volta a responder.
+- **Indisponível, com snapshot antigo, despublicado ou removido → 404.** Não há página "indisponível" com dados comerciais desatualizados. O 404 é preferido ao 410 porque a indisponibilidade costuma ser temporária; quando o imóvel volta a ser elegível após sincronização, a mesma URL volta a responder.
 - **Slugs de imóveis** são `vista-{codigo}`, gerados na importação e nunca alterados por preço, título ou descrição. Não há edição de slug de imóvel no painel.
 - **Slugs de coleções** são editáveis: o slug anterior é gravado em `collection_slug_redirects` (migration `0009`) e `/colecoes/{antigo}` responde 308 para o slug atual. A resolução é por ID, o que evita cadeias, e o slug que volta a ser usado sai da tabela, o que evita loops.
 - Redirecionamentos dinâmicos usam `permanentRedirect` (HTTP 308). O Google trata 308 como 301. Os redirecionamentos fixos do `next.config.ts` usam 301 explícito.
@@ -110,7 +110,7 @@ Sem avaliações, coordenadas, disponibilidade ou preço ausente. O endereço é
 
 | Superfície | Estratégia | Motivo |
 |---|---|---|
-| Home, catálogo, comprar, alugar, detalhe, coleções, sitemap | Renderização dinâmica, sem cache entre requisições | A elegibilidade depende do horário (expiração da confirmação, idade do snapshot) e de sincronizações executadas por CLI, fora do Next.js. Um cache de página poderia manter visível um imóvel inelegível |
+| Home, catálogo, comprar, alugar, detalhe, coleções, sitemap | Renderização dinâmica, sem cache entre requisições | A elegibilidade depende da idade do snapshot e de sincronizações. Um cache de página poderia manter visível um imóvel inelegível |
 | Mesma requisição | React `cache` (metadata + página, coleções) | Elimina consultas duplicadas |
 | Mutações no painel | `revalidatePublicCatalog` (home, catálogos, detalhe, coleções, sitemap) | Limpa o Router Cache dos clientes |
 | Páginas institucionais | Estáticas no build | Sem dados dinâmicos |

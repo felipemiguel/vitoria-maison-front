@@ -1,12 +1,12 @@
 # Schema PostgreSQL
 
-Migrations: `0000_initial_backend` a `0015_backfill_broker_leads`.
+Migrations: `0000_initial_backend` a `0016_landing_pages`.
 
 `0014_broker_leads` estende `lead_submissions` com origem (`source`, `broker_site_id`, `broker_user_id`, `source_hostname`, `source_path`), atribuição (`vista_broker_code_requested`, `vista_broker_code_returned`, `assignment_status`, `assignment_checked_at/by`), `CHECK` de consistência e gatilho que torna a origem imutável; `lead_delivery_attempts` ganha `vista_reference` e `vista_broker_code_returned`. `0003` revoga aprovações legadas; `0004` adiciona autenticação e situação da sincronização; `0005` adiciona auditoria administrativa e versão otimista de coleções; `0006` registra lotes idempotentes de importação.
 
 ## curated_properties
 
-Seleção e conteúdo Maison. `vista_code` e `slug` são únicos; `published` e `featured` iniciam falsos. `publication_purpose` é editorial. A confirmação manual guarda instante, expiração, operador e origem. `publication_version` evita publicação concorrente sobre dados alterados.
+Seleção e conteúdo Maison. `vista_code` e `slug` são únicos; `published` e `featured` iniciam falsos. `publication_purpose` é editorial. A confirmação de disponibilidade guarda instante, responsável e origem; sincronizações usam `VISTA_SYNC` e não possuem expiração separada do snapshot. `publication_version` evita publicação concorrente sobre dados alterados.
 
 ## property_snapshots
 
@@ -29,6 +29,10 @@ Perfil profissional (1 por usuário), site do corretor (1 por perfil, subdomíni
 ## media_assets
 
 Mídia enviada pelo painel, armazenada em `bytea` (hoje só a foto profissional do corretor, WebP já tratado, até 2 MB por CHECK). Ligada a `broker_profiles.profile_image_asset_id`. Servida por `/media/<id>`.
+
+## landing_pages
+
+Landing pages de imóvel (`0016`): slug único (CHECK de formato, travado após a primeira publicação), `curated_property_id` (RESTRICT), status `DRAFT | PUBLISHED | ARCHIVED` (CHECK; publicada exige datas de publicação), blocos em `content` (jsonb validado pelo schema da aplicação), imagem de topo opcional em `media_assets` (kind `LANDING_PAGE_HERO`), WhatsApp e textos de compartilhamento, `version` para bloqueio otimista. Ver `docs/landing-pages.md`.
 
 ## sync_runs
 

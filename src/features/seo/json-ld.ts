@@ -1,7 +1,7 @@
 import type { Property } from "@/features/properties/types";
 import { BRAND_LOGO_PATH, BRAND_NAME, SITE_DESCRIPTION, SITE_LANGUAGE, absoluteUrl, isHttpsUrl, type SeoConfig } from "./config";
 import { companyInfo } from "@/lib/config/company";
-import { PROPERTY_TYPE_LABEL, propertySeoDescription, propertySeoTitle } from "./property-seo";
+import { propertySeoDescription, propertySeoTitle, propertyTypeLabel } from "./property-seo";
 
 /**
  * Dados estruturados Schema.org. Regras:
@@ -103,7 +103,7 @@ export function propertyListingJsonLd(property: Property, config: SeoConfig): Js
     }) : undefined,
     about: compact({
       "@type": "Apartment",
-      name: `${PROPERTY_TYPE_LABEL[c.type]} em ${property.location.neighborhood}`,
+      name: `${propertyTypeLabel(c.type)} em ${property.location.neighborhood}`,
       floorSize: c.area > 0 ? { "@type": "QuantitativeValue", value: c.area, unitCode: "MTK" } : undefined,
       numberOfBedrooms: c.bedrooms || undefined,
       numberOfBathroomsTotal: c.bathrooms || undefined,

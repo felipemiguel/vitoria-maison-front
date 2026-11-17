@@ -24,6 +24,7 @@ Fonte única: `src/features/access/permissions.ts`.
 | `properties:read`, `properties:import`, `properties:edit`, `properties:publish`, `properties:sync` | ✓ | ✓ | |
 | `collections:manage` | ✓ | ✓ | |
 | `leads:read`, `leads:manage` | ✓ | ✓ | |
+| `landing-pages:manage` | ✓ | ✓ | |
 | `account:manage-own` (área pessoal) | ✓ | ✓ | ✓ |
 | `broker-profile:read-own`, `broker-profile:update-own` | | | ✓ |
 | `broker-site:read-own`, `broker-site:create-own`, `broker-site:update-own`, `broker-site:submit-review` | | | ✓ |
@@ -59,6 +60,7 @@ As permissões `broker-*:*-own` exigem também **propriedade do recurso**: o don
 | Meu site: seleção, destaques e ordem dos imóveis, imagem de apresentação | `addPropertiesAction`, `manageSelectionAction`, `uploadHeroAction` | `broker-site:update-own` + propriedade |
 | Meu site → Leads: leads do próprio site (escopo site + usuário da sessão) | `/admin/meu-site/leads` | `broker-site:read-own` + `leads:read-own` (BROKER) |
 | Leads: reconciliar entrega e conferir atribuição | `reconcileLeadAction`, `checkLeadAssignmentAction` | `leads:manage` |
+| Landing pages: criar, editar blocos, imagem, publicar, despublicar, arquivar, duplicar, prévia | `/admin/landing-pages` + actions | `landing-pages:manage` |
 | Sites de corretores: listar, revisar, aprovar, devolver, suspender, reativar, prévia, verificar CRECI, código Vista | `/admin/sites-corretores` + actions | `broker-site:manage-all` |
 
 Comandos CLI (`npm run maison:*`, `vista:*`, `admin:create`) rodam no servidor com acesso direto ao banco, fora do painel, e não passam pelo RBAC. O acesso a eles é controlado pela infraestrutura.

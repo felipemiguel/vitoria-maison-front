@@ -1,8 +1,10 @@
 import type { Property, PropertyPurpose, PropertyType } from "@/features/properties/types";
 import { truncateText } from "./metadata";
 
-export const PROPERTY_TYPE_LABEL: Record<PropertyType, string> = { APARTMENT: "Apartamento", FLAT: "Flat", STUDIO: "Studio", PENTHOUSE: "Cobertura" };
+export const PROPERTY_TYPE_LABEL: Record<string, string> = { APARTMENT: "Apartamento", FLAT: "Flat", STUDIO: "Studio", PENTHOUSE: "Cobertura" };
 export const PURPOSE_LABEL: Record<PropertyPurpose, string> = { SALE: "à venda", RENT: "para alugar", INVESTMENT: "para investimento" };
+
+export function propertyTypeLabel(type: PropertyType): string { return PROPERTY_TYPE_LABEL[type] ?? type; }
 
 /** Bairros cujo uso consagrado pede artigo. Os demais usam "em", que é correto para qualquer nome. */
 const NEIGHBORHOOD_PREPOSITION: Record<string, string> = { jardins: "nos" };
@@ -26,7 +28,7 @@ function formatMoney(value: number): string {
  */
 export function propertySeoTitle(property: Property): string {
   const c = property.commercial;
-  const base = `${PROPERTY_TYPE_LABEL[c.type]} ${PURPOSE_LABEL[c.purpose]} ${locationPhrase(property.location.neighborhood)}`;
+  const base = `${propertyTypeLabel(c.type)} ${PURPOSE_LABEL[c.purpose]} ${locationPhrase(property.location.neighborhood)}`;
   return c.area > 0 ? `${base}, ${formatArea(c.area)}` : base;
 }
 
@@ -43,7 +45,7 @@ export function propertyFactsSentence(property: Property): string {
     c.suites ? plural(c.suites, "suíte", "suítes") : undefined,
     c.parkingSpaces ? plural(c.parkingSpaces, "vaga", "vagas") : undefined,
   ].filter(Boolean);
-  const head = `${PROPERTY_TYPE_LABEL[c.type]} ${PURPOSE_LABEL[c.purpose]} ${locationPhrase(property.location.neighborhood)}, ${property.location.city}`;
+  const head = `${propertyTypeLabel(c.type)} ${PURPOSE_LABEL[c.purpose]} ${locationPhrase(property.location.neighborhood)}, ${property.location.city}`;
   const price = c.price > 0 ? ` ${c.purpose === "RENT" ? "Aluguel" : "Valor"}: ${formatMoney(c.price)}.` : "";
   return `${head}${facts.length ? `, com ${facts.join(", ")}` : ""}.${price}`;
 }

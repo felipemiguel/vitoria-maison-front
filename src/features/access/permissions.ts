@@ -14,6 +14,7 @@ export const PERMISSIONS = [
   "users:read", "users:create", "users:update", "users:deactivate", "users:assign-roles",
   "properties:read", "properties:import", "properties:edit", "properties:publish", "properties:sync",
   "collections:manage",
+  "landing-pages:manage",
   "leads:read", "leads:manage",
   "account:manage-own",
   // Sites de corretores: as permissões "-own" exigem também ser dono do recurso (validado no servidor).
@@ -27,7 +28,7 @@ export type Permission = (typeof PERMISSIONS)[number];
 
 const OPERATIONS: Permission[] = [
   "properties:read", "properties:import", "properties:edit", "properties:publish", "properties:sync",
-  "collections:manage", "leads:read", "leads:manage",
+  "collections:manage", "landing-pages:manage", "leads:read", "leads:manage",
 ];
 const USER_MANAGEMENT: Permission[] = ["users:read", "users:create", "users:update", "users:deactivate", "users:assign-roles"];
 

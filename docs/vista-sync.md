@@ -10,10 +10,11 @@ Somente códigos existentes em `curated_properties` são sincronizados por `vist
 4. Validar `FotoDestaque` como HTTPS e, se configurado, exigir `VISTA_IMAGE_HOSTNAME`.
 5. Atualizar o snapshot em transação.
 6. Persistir disponibilidade `UNKNOWN` enquanto não existir campo confiável do Vista.
-7. Preservar integralmente curadoria, publicação e confirmação manual.
-8. Registrar o resultado em `sync_runs`.
+7. Confirmar operacionalmente a disponibilidade com origem `VISTA_SYNC` quando o snapshot continuar `UNKNOWN`.
+8. Preservar integralmente curadoria e publicação.
+9. Registrar o resultado em `sync_runs`.
 
-Falhas de rede são temporárias e preservam o snapshot. Resposta inválida e imóvel ausente são registrados sem exclusão automática. A sincronização não publica, não republica e não renova disponibilidade manual. Um snapshot mais antigo que o limite configurado deixa de ser elegível mesmo quando preservado.
+Falhas de rede são temporárias e preservam o snapshot. Resposta inválida e imóvel ausente são registrados sem exclusão automática. A sincronização não publica nem republica; uma sincronização bem-sucedida renova a confirmação operacional de disponibilidade. Um snapshot mais antigo que o limite configurado deixa de ser elegível mesmo quando preservado.
 
 ## Comandos
 

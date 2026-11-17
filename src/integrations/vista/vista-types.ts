@@ -13,6 +13,8 @@ export type VistaListOptions = {
   page?: number;
   pageSize?: number;
   showTotal?: boolean;
+  showInternal?: boolean;
+  showSuspended?: boolean;
   filter?: Record<string, unknown>;
   advFilter?: Record<string, unknown>;
   order?: Record<string, "asc" | "desc">;
@@ -20,6 +22,8 @@ export type VistaListOptions = {
 
 export type VistaDetailsOptions = {
   fields: readonly VistaField[];
+  showInternal?: boolean;
+  showSuspended?: boolean;
 };
 
 export interface VistaClient {

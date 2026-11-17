@@ -1,8 +1,7 @@
-import { and, eq, gt, gte, inArray, isNotNull, ne, or, sql, type SQL } from "drizzle-orm";
+import { and, eq, gte, isNotNull, ne, or, sql, type SQL } from "drizzle-orm";
 import { curatedProperties, propertySnapshots } from "@/database/schema";
 import type { PublicationPolicyConfig } from "../config";
 import type { PublicationDecision, PublicationRecord } from "./types";
-import { supportedPublicationTypes } from "./types";
 
 export class PropertyPublicationPolicy {
   constructor(private readonly config: PublicationPolicyConfig) {}
@@ -22,16 +21,13 @@ export class PropertyPublicationPolicy {
       if (snapshot.syncStatus !== "SUCCESS") reasons.push("O último snapshot comercial não foi sincronizado com sucesso.");
       if (now.getTime() - snapshot.fetchedAt.getTime() > maximumAge) reasons.push("O snapshot comercial está expirado.");
       if (!snapshot.privateArea || Number(snapshot.privateArea) <= 0) reasons.push("A área privativa válida está ausente.");
-      if (!snapshot.category || !supportedPublicationTypes.includes(snapshot.category as never)) reasons.push("A categoria do Vista ainda não possui mapeamento público.");
       const price = record.publicationPurpose === "RENT" ? snapshot.rentalPrice : snapshot.salePrice;
       if (!price || Number(price) <= 0) reasons.push("O preço correspondente à finalidade editorial está ausente ou inválido.");
       if (snapshot.availabilityStatus === "UNAVAILABLE") {
         reasons.push("O Vista informou indisponibilidade explícita.");
       } else if (snapshot.availabilityStatus !== "AVAILABLE") {
-        if (!record.availabilityConfirmedAt || !record.availabilityExpiresAt || !record.availabilityConfirmedBy || !record.availabilityConfirmationSource || record.availabilityConfirmedAt.getTime() > now.getTime()) {
+        if (!record.availabilityConfirmedAt || !record.availabilityConfirmedBy || !record.availabilityConfirmationSource || record.availabilityConfirmedAt.getTime() > now.getTime()) {
           reasons.push("A disponibilidade não foi confirmada.");
-        } else if (record.availabilityExpiresAt.getTime() <= now.getTime()) {
-          reasons.push("A confirmação manual de disponibilidade expirou.");
         }
       }
     }
@@ -57,7 +53,6 @@ export function publicVisibilityConditions(now: Date, config: PublicationPolicyC
     isNotNull(curatedProperties.publicationPurpose),
     sql`${selectedPrice} > 0`,
     sql`${propertySnapshots.privateArea} > 0`,
-    inArray(propertySnapshots.category, [...supportedPublicationTypes]),
     sql`${title} IS NOT NULL`,
     sql`${cover} ~ '^https://'`,
     ne(propertySnapshots.availabilityStatus, "UNAVAILABLE"),
@@ -66,7 +61,6 @@ export function publicVisibilityConditions(now: Date, config: PublicationPolicyC
       and(
         eq(propertySnapshots.availabilityStatus, "UNKNOWN"),
         isNotNull(curatedProperties.availabilityConfirmedAt),
-        gt(curatedProperties.availabilityExpiresAt, now),
       ),
     )!,
   ];

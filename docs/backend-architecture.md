@@ -33,10 +33,10 @@ No modo banco, a consulta pública exige simultaneamente:
 
 - curadoria `published=true`;
 - snapshot `SUCCESS`;
-- disponibilidade explícita `AVAILABLE` ou confirmação manual completa e vigente quando o Vista retorna `UNKNOWN`;
+- disponibilidade explícita `AVAILABLE` ou confirmação operacional registrada pela sincronização quando o Vista retorna `UNKNOWN`;
 - ausência de indisponibilidade explícita do Vista;
 - snapshot mais novo que `PUBLICATION_SNAPSHOT_MAX_AGE_HOURS`;
-- finalidade editorial, título, categoria conhecida, área privativa, preço e capa;
+- finalidade editorial, título, área privativa, preço e capa;
 - `PROPERTY_DEFAULT_STATE` configurado.
 
 O predicado SQL reutilizável é derivado da mesma política de domínio. Contagem e paginação já são calculadas somente sobre imóveis elegíveis. Uma URL inelegível retorna `notFound()`.

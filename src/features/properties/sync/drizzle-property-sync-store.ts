@@ -1,7 +1,7 @@
 import { desc, eq, sql } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import * as schema from "@/database/schema";
-import { curatedProperties, propertySnapshots, syncRuns } from "@/database/schema";
+import { curatedProperties, propertyPublicationEvents, propertySnapshots, syncRuns } from "@/database/schema";
 import type { PropertyCommercialData } from "../types";
 import type { CuratedSelection, PropertySyncStore, SyncRunSummary } from "./types";
 
@@ -72,7 +72,19 @@ export class DrizzlePropertySyncStore implements PropertySyncStore {
       await tx.update(curatedProperties).set({
         updatedAt: new Date(), publicationVersion: sql`${curatedProperties.publicationVersion} + 1`,
         lastSyncStatus: "SUCCESS", lastSyncError: null, lastSyncAttemptAt: data.fetchedAt,
+        availabilityConfirmedAt: data.availabilityStatus === "UNKNOWN" ? data.fetchedAt : null,
+        availabilityExpiresAt: null,
+        availabilityConfirmedBy: data.availabilityStatus === "UNKNOWN" ? "Sincronização Vista" : null,
+        availabilityConfirmationSource: data.availabilityStatus === "UNKNOWN" ? "VISTA_SYNC" : null,
       }).where(eq(curatedProperties.id, curatedPropertyId));
+      if (data.availabilityStatus === "UNKNOWN") {
+        await tx.insert(propertyPublicationEvents).values({
+          curatedPropertyId,
+          eventType: "AVAILABILITY_CONFIRMED",
+          actor: "VISTA_SYNC",
+          details: { source: "VISTA_SYNC", confirmedAt: data.fetchedAt.toISOString(), expiresAt: null },
+        });
+      }
     });
   }
 

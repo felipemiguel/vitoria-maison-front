@@ -8,7 +8,7 @@ export const RESERVED_SUBDOMAINS: ReadonlySet<string> = new Set([
   "www", "admin", "api", "app", "mail", "smtp", "ftp", "suporte", "contato", "blog", "status", "assets", "static", "cdn",
   "auth", "login", "dashboard", "vitoria", "maison", "vitoriamaison",
   // Extensões: infraestrutura de e-mail/DNS, ambientes e áreas que sugerem canal oficial.
-  "imap", "pop", "pop3", "webmail", "email", "mx", "ns", "ns1", "ns2", "autoconfig", "autodiscover",
+  "imap", "pop", "pop3", "webmail", "email", "mx", "ns", "ns1", "ns2", "autoconfig", "autodiscover", "notify", "send", "bounce", "resend",
   "dev", "staging", "homolog", "homologacao", "preview", "test", "teste", "sandbox", "demo",
   "media", "img", "images", "files", "uploads", "docs", "help", "ajuda", "sac", "atendimento", "ouvidoria",
   "painel", "conta", "minha-conta", "seguranca", "security", "sistema", "root", "administrador", "adm",

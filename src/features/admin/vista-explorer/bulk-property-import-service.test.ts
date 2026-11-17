@@ -11,18 +11,19 @@ describe("BulkPropertyImportService", () => {
     const importer = { importVistaProperty: vi.fn(async (code: string) => {
       if (code === "3") throw new Error("Imóvel não encontrado no Vista.");
       return { status: code === "2" ? "DUPLICATE" as const : "IMPORTED" as const, id: `00000000-0000-4000-8000-00000000000${code}`, vistaCode: code };
-    }) };
+    }), prepareImportedDraft: vi.fn(async () => undefined) };
     const persistence = store();
-    const result = await new BulkPropertyImportService(importer, persistence, 2).execute({ codes: ["1", "2", "3"], idempotencyKey: "00000000-0000-4000-8000-000000000010" }, "admin");
+    const result = await new BulkPropertyImportService(importer, persistence, 2).execute({ codes: ["1", "2", "3"], purpose: "SALE", idempotencyKey: "00000000-0000-4000-8000-000000000010" }, "admin");
     expect(result).toMatchObject({ status: "PARTIAL", imported: 1, existing: 1, failed: 1 });
     expect(persistence.complete).toHaveBeenCalledOnce();
     expect(persistence.auditImported).toHaveBeenCalledOnce();
+    expect(importer.prepareImportedDraft).toHaveBeenCalledWith(expect.objectContaining({ code: "1", purpose: "SALE", adminUserId: "admin" }));
   });
 
   it("retorna o resultado anterior sem repetir importações", async () => {
     const previous: BulkImportResult = { batchId: "batch", status: "SUCCESS", total: 1, imported: 1, existing: 0, failed: 0, items: [{ code: "1", status: "IMPORTED" }] };
-    const importer = { importVistaProperty: vi.fn() };
-    const result = await new BulkPropertyImportService(importer, store(previous)).execute({ codes: ["1"], idempotencyKey: "00000000-0000-4000-8000-000000000010" }, "admin");
+    const importer = { importVistaProperty: vi.fn(), prepareImportedDraft: vi.fn() };
+    const result = await new BulkPropertyImportService(importer, store(previous)).execute({ codes: ["1"], purpose: "RENT", idempotencyKey: "00000000-0000-4000-8000-000000000010" }, "admin");
     expect(result).toEqual(previous);
     expect(importer.importVistaProperty).not.toHaveBeenCalled();
   });

@@ -106,7 +106,8 @@ export class DatabasePropertyRepository implements PropertyRepository {
 
   async listFacets(filters: PropertyFilters = {}): Promise<PropertyFacets> {
     if (!this.options.defaultState) return { purposes: [], types: [], neighborhoods: [] };
-    const rows = await this.db.selectDistinct({ purpose: curatedProperties.publicationPurpose, type: propertySnapshots.category, neighborhood: propertySnapshots.neighborhood })
+    const publicType = sql<string>`COALESCE(NULLIF(BTRIM(${propertySnapshots.category}), ''), NULLIF(BTRIM(${propertySnapshots.rawCategory}), ''), 'Imóvel')`;
+    const rows = await this.db.selectDistinct({ purpose: curatedProperties.publicationPurpose, type: publicType, neighborhood: propertySnapshots.neighborhood })
       .from(curatedProperties)
       .innerJoin(propertySnapshots, eq(propertySnapshots.curatedPropertyId, curatedProperties.id))
       .where(and(...this.buildConditions(filters)));
@@ -120,13 +121,14 @@ export class DatabasePropertyRepository implements PropertyRepository {
 
   private buildConditions(filters: PropertyFilters): SQL[] {
     const conditions: SQL[] = publicVisibilityConditions(this.now(), this.options);
+    if (filters.ids) conditions.push(filters.ids.length ? inArray(curatedProperties.id, filters.ids) : sql`false`);
     if (filters.slug) conditions.push(eq(curatedProperties.slug, filters.slug));
     if (filters.vistaCode) conditions.push(ilike(curatedProperties.vistaCode, filters.vistaCode.replace(/[\\%_]/g, "")));
     if (filters.purpose) conditions.push(eq(curatedProperties.publicationPurpose, filters.purpose));
     if (filters.city) conditions.push(ilike(propertySnapshots.city, filters.city));
     if (filters.neighborhood) conditions.push(ilike(propertySnapshots.neighborhood, filters.neighborhood));
     if (filters.category) conditions.push(ilike(propertySnapshots.rawCategory, filters.category));
-    if (filters.type) conditions.push(eq(propertySnapshots.category, filters.type));
+    if (filters.type) conditions.push(sql`COALESCE(NULLIF(BTRIM(${propertySnapshots.category}), ''), NULLIF(BTRIM(${propertySnapshots.rawCategory}), ''), 'Imóvel') = ${filters.type}`);
     if (filters.bedrooms) conditions.push(gte(propertySnapshots.bedrooms, filters.bedrooms));
     if (filters.minArea) conditions.push(gte(propertySnapshots.privateArea, String(filters.minArea)));
     if (filters.maxArea) conditions.push(lte(propertySnapshots.privateArea, String(filters.maxArea)));
@@ -157,7 +159,7 @@ export class DatabasePropertyRepository implements PropertyRepository {
 
   private toProperty({ curated, snapshot }: Row, collectionSlugs: string[]): Property {
     const purpose = curated.publicationPurpose!;
-    const type = snapshot.category as PropertyType;
+    const type = (snapshot.category?.trim() || snapshot.rawCategory?.trim() || "Imóvel") as PropertyType;
     const priceValue = purpose === "RENT" ? snapshot.rentalPrice : snapshot.salePrice;
     const cover = curated.editorialCoverUrl ?? snapshot.coverImageUrl!;
     const title = curated.editorialTitle ?? snapshot.sourceTitle!;

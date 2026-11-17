@@ -71,4 +71,17 @@ describe("HttpVistaClient", () => {
     const url = (fetchMock.mock.calls[0] as unknown[])[0] as URL;
     expect(JSON.parse(url.searchParams.get("pesquisa")!)).toMatchObject({ filter: { Cidade: ["like", "São Paulo"] }, advFilter: { Or: { ValorVenda: [100, 200], ValorLocacao: [100, 200] } }, order: { Codigo: "asc" } });
   });
+
+  it("envia showInternal e showSuspended somente quando solicitados", async () => {
+    const fetchMock = vi.fn(async () => new Response("[]", { status: 200 }));
+    const client = new HttpVistaClient(config, { fetch: fetchMock as typeof fetch, logger, retries: 0 });
+    await client.listProperties({ fields: ["Codigo"], showInternal: true, showSuspended: true });
+    await client.getPropertyDetails("31", { fields: ["Codigo"], showInternal: true, showSuspended: true });
+    const listUrl = (fetchMock.mock.calls[0] as unknown[])[0] as URL;
+    const detailUrl = (fetchMock.mock.calls[1] as unknown[])[0] as URL;
+    expect(listUrl.searchParams.get("showInternal")).toBe("1");
+    expect(listUrl.searchParams.get("showSuspended")).toBe("1");
+    expect(detailUrl.searchParams.get("showInternal")).toBe("1");
+    expect(detailUrl.searchParams.get("showSuspended")).toBe("1");
+  });
 });

@@ -1,14 +1,13 @@
 import type { AdminPropertySummary } from "./types";
 
-export type AdminAvailabilityDisplay = "AVAILABLE" | "MANUAL_CONFIRMED" | "UNKNOWN" | "EXPIRED" | "UNAVAILABLE";
+export type AdminAvailabilityDisplay = "AVAILABLE" | "MANUAL_CONFIRMED" | "UNKNOWN" | "UNAVAILABLE";
 
-export function availabilityDisplay(property: Pick<AdminPropertySummary, "availabilityStatus" | "availabilityExpiresAt">, now = new Date()): AdminAvailabilityDisplay {
+export function availabilityDisplay(property: Pick<AdminPropertySummary, "availabilityStatus" | "availabilityConfirmedAt">): AdminAvailabilityDisplay {
   if (property.availabilityStatus === "UNAVAILABLE") return "UNAVAILABLE";
   if (property.availabilityStatus === "AVAILABLE") return "AVAILABLE";
-  if (!property.availabilityExpiresAt) return "UNKNOWN";
-  return property.availabilityExpiresAt.getTime() > now.getTime() ? "MANUAL_CONFIRMED" : "EXPIRED";
+  return property.availabilityConfirmedAt ? "MANUAL_CONFIRMED" : "UNKNOWN";
 }
 
 export function availabilityLabel(value: AdminAvailabilityDisplay): string {
-  return ({ AVAILABLE: "Disponível no Vista", MANUAL_CONFIRMED: "Confirmada manualmente", UNKNOWN: "Desconhecida", EXPIRED: "Confirmação expirada", UNAVAILABLE: "Indisponível" })[value];
+  return ({ AVAILABLE: "Disponível no Vista", MANUAL_CONFIRMED: "Disponibilidade confirmada", UNKNOWN: "Não confirmada", UNAVAILABLE: "Indisponível" })[value];
 }

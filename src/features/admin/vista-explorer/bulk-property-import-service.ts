@@ -2,9 +2,11 @@ import type { ImportResult } from "@/features/admin/properties/types";
 import { sanitizeForLog, toSanitizedError } from "@/integrations/vista/vista-errors";
 import { bulkImportInputSchema } from "./validation";
 import type { BulkImportItemResult, BulkImportResult } from "./types";
+import type { VistaImportPurpose } from "./types";
 
 export interface BulkPropertyImporter {
   importVistaProperty(code: string): Promise<ImportResult>;
+  prepareImportedDraft(input: { id: string; code: string; purpose: VistaImportPurpose; adminUserId: string }): Promise<void>;
 }
 
 export interface BulkImportStore {
@@ -24,7 +26,10 @@ export class BulkPropertyImportService {
       try {
         const result = await this.importer.importVistaProperty(code);
         const status = result.status === "IMPORTED" ? "IMPORTED" : "EXISTING";
-        if (status === "IMPORTED") await this.store.auditImported(adminUserId, result.id, code, claim.batchId);
+        if (status === "IMPORTED") {
+          await this.importer.prepareImportedDraft({ id: result.id, code, purpose: data.purpose, adminUserId });
+          await this.store.auditImported(adminUserId, result.id, code, claim.batchId);
+        }
         return { code, status, id: result.id };
       } catch (error) {
         console.error(JSON.stringify(sanitizeForLog({

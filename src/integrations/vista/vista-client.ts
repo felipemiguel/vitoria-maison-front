@@ -62,7 +62,11 @@ export class HttpVistaClient implements VistaClient {
       ...(options.advFilter && Object.keys(options.advFilter).length ? { advFilter: options.advFilter } : {}),
       ...(options.order && Object.keys(options.order).length ? { order: options.order } : {}),
       paginacao: { pagina: page, quantidade: pageSize },
-    }, options.showTotal === false ? {} : { showtotal: "1" });
+    }, {
+      ...(options.showTotal === false ? {} : { showtotal: "1" }),
+      ...(options.showInternal ? { showInternal: "1" } : {}),
+      ...(options.showSuspended ? { showSuspended: "1" } : {}),
+    });
     return this.request(url, "properties.list");
   }
 
@@ -72,7 +76,11 @@ export class HttpVistaClient implements VistaClient {
     if (!/^[\p{L}\p{N}._-]{1,80}$/u.test(normalizedCode)) {
       throw new VistaError("Código de imóvel inválido.", "VALIDATION");
     }
-    const url = buildVistaUrl(this.config, "imoveis/detalhes", { fields: options.fields }, { imovel: normalizedCode });
+    const url = buildVistaUrl(this.config, "imoveis/detalhes", { fields: options.fields }, {
+      imovel: normalizedCode,
+      ...(options.showInternal ? { showInternal: "1" } : {}),
+      ...(options.showSuspended ? { showSuspended: "1" } : {}),
+    });
     return this.request(url, "properties.details");
   }
 

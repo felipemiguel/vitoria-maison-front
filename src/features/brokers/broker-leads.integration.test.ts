@@ -38,7 +38,7 @@ integration("leads por corretor (PostgreSQL)", () => {
   afterAll(async () => pool.end());
   beforeEach(async () => {
     sent.length = 0; next = { status: "DELIVERED", reference: "22574", brokerCode: "3" };
-    await db.execute(sql`truncate table lead_delivery_attempts, lead_submissions, broker_site_properties, broker_sites, broker_profiles, media_assets, user_audit_events`);
+    await db.execute(sql`truncate table landing_pages, lead_delivery_attempts, lead_submissions, broker_site_properties, broker_sites, broker_profiles, media_assets, user_audit_events`);
     await db.delete(adminAuditEvents).where(eq(adminAuditEvents.entityType, "LEAD"));
     await db.delete(curatedProperties).where(like(curatedProperties.vistaCode, "BLD-%"));
     await db.execute(sql`truncate table user_roles`);

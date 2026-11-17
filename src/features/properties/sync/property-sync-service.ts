@@ -69,7 +69,7 @@ export class PropertySyncService {
   }
 
   private async fetchNormalized(code: string) {
-    const response = await this.vista.getPropertyDetails(code, { fields: VISTA_DETAIL_FIELDS });
+    const response = await this.vista.getPropertyDetails(code, { fields: VISTA_DETAIL_FIELDS, showInternal: true });
     const detail = extractVistaDetail(response);
     if (!detail) throw new VistaMappingError("Vista não retornou um imóvel para o código.", { kind: "NOT_FOUND" });
     // O identificador aceito por `imovel` pode ser o ID interno retornado pela

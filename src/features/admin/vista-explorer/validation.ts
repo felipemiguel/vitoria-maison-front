@@ -7,6 +7,7 @@ const optionalMoney = z.preprocess((value) => value === "" || value === undefine
 const optionalBedrooms = z.preprocess((value) => value === "" || value === undefined ? undefined : value, z.coerce.number().int().min(0).max(50).optional());
 
 export const explorerFiltersSchema = z.object({
+  purpose: z.enum(["ALL", "SALE", "RENT"]).catch("ALL"),
   code,
   city: text,
   neighborhood: text,
@@ -31,18 +32,24 @@ export function parseExplorerFilters(input: Record<string, string | string[] | u
 
 export const bulkImportInputSchema = z.object({
   codes: z.array(z.string().trim().min(1).max(80).regex(/^[\p{L}\p{N}._-]+$/u)).min(1).max(20).transform((codes) => [...new Set(codes)]),
+  purpose: z.enum(["SALE", "RENT"]),
   idempotencyKey: z.string().trim().min(1).max(200),
 });
 
 export function buildVistaFilters(filters: VistaExplorerFilters): { filter?: Record<string, unknown>; advFilter?: Record<string, unknown> } {
   const filter: Record<string, unknown> = {};
+  if (filters.purpose !== "ALL") filter.Finalidade = filters.purpose === "SALE" ? "Venda" : "Locacao";
   if (filters.code) filter.Codigo = filters.code;
   if (filters.city) filter.Cidade = ["like", filters.city];
   if (filters.neighborhood) filter.Bairro = ["like", filters.neighborhood];
   if (filters.category) filter.Categoria = ["like", filters.category];
   if (filters.bedrooms !== undefined) filter.Dormitorios = filters.bedrooms;
   const range = priceRange(filters.minPrice, filters.maxPrice);
-  const advFilter = range ? { Or: { ValorVenda: range, ValorLocacao: range } } : undefined;
+  const advFilter = range
+    ? filters.purpose === "ALL"
+      ? { Or: { ValorVenda: range, ValorLocacao: range } }
+      : { [filters.purpose === "SALE" ? "ValorVenda" : "ValorLocacao"]: range }
+    : undefined;
   return { ...(Object.keys(filter).length ? { filter } : {}), ...(advFilter ? { advFilter } : {}) };
 }
 

@@ -103,7 +103,7 @@ Para retirar do site sem apagar snapshot ou histórico:
 npm run maison:property:unpublish -- --code=31
 ```
 
-A confirmação expira automaticamente após `AVAILABILITY_CONFIRMATION_TTL_DAYS`; o imóvel sai de todas as consultas públicas mesmo que `published=true`. O snapshot também precisa ser mais recente que `PUBLICATION_SNAPSHOT_MAX_AGE_HOURS`. Detalhes em `docs/vista-publication-rules.md`.
+A sincronização bem-sucedida confirma a disponibilidade operacional enquanto o snapshot permanecer recente. O imóvel sai das consultas públicas quando o snapshot ultrapassa `PUBLICATION_SNAPSHOT_MAX_AGE_HOURS`, quando a sincronização deixa de ser válida ou quando o Vista informa indisponibilidade explícita. Detalhes em `docs/vista-publication-rules.md`.
 
 O teste de integração PostgreSQL só executa com `TEST_DATABASE_URL` apontando para um banco de teste já migrado:
 
@@ -155,6 +155,10 @@ O corretor configura tudo em **Meu site** (perfil, foto, textos da página, imag
 Os formulários dos sites de corretores geram leads vinculados ao corretor de origem, resolvido no servidor pelo hostname, com o imóvel validado na seleção do site. O corretor vê os próprios leads em **Meu site → Leads**; o ADMIN acompanha origem, entrega e atribuição em **Leads**. A atribuição no Vista permanece "não verificada" até o contrato ser confirmado. Flags: `BROKER_LEADS_ENABLED`, `BROKER_VISTA_ASSIGNMENT_ENABLED`. Ver `docs/broker-leads.md`, `docs/vista-broker-leads.md` e `docs/broker-sites-production.md`.
 
 Local: `BROKER_SITES_ENABLED=true BROKER_SITES_BASE_DOMAIN=maison.lvh.me BROKER_LEADS_ENABLED=true npm run dev` e abra `http://ana.maison.lvh.me:3000`. Detalhes, segurança e pendências de DNS em `docs/broker-sites-foundation.md`.
+
+## Landing pages de imóvel
+
+Páginas de venda de um imóvel para anúncios e divulgação, em `/lp/<slug>`, com contato só pelo WhatsApp. ADMIN e MANAGER criam em **Landing pages** informando o código Vista; a página nasce em rascunho com blocos preenchidos (topo, ficha, texto, galeria, diferenciais, localização, FAQ, condições, chamada), que podem ser editados, ocultados e reordenados. Preço, ficha e fotos vêm sempre do Vista. As páginas ficam fora do Google (`noindex`). Detalhes em `docs/landing-pages.md`.
 
 Testes de integração com PostgreSQL (incluindo concorrência do último ADMIN):
 

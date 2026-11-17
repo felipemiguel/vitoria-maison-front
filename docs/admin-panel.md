@@ -35,7 +35,7 @@ O dashboard separa:
 - flag editorial aprovada (`published`);
 - rascunhos;
 - imóveis realmente elegíveis e visíveis;
-- disponibilidade desconhecida/expirada;
+- disponibilidade ainda não confirmada por sincronização;
 - último erro de sincronização por imóvel;
 - execuções recentes de sincronização.
 

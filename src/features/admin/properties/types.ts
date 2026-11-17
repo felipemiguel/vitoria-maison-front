@@ -5,7 +5,7 @@ export type AdminPropertyFilters = {
   search?: string;
   neighborhood?: string;
   publication?: "PUBLISHED" | "DRAFT";
-  availability?: AvailabilityStatus | "EXPIRED";
+  availability?: AvailabilityStatus;
   syncStatus?: "NEVER" | "SUCCESS" | "FAILED";
   featured?: boolean;
   sort?: "newest" | "code" | "title" | "last-sync" | "featured";
@@ -17,7 +17,7 @@ export type AdminPropertySummary = {
   id: string; vistaCode: string; publicationVersion: number; title: string; neighborhood: string | null; city: string | null;
   coverImageUrl: string | null; salePrice: string | null; rentalPrice: string | null;
   publicationPurpose: PropertyPurpose | null; published: boolean; publiclyEligible: boolean;
-  availabilityStatus: AvailabilityStatus; availabilityExpiresAt: Date | null;
+  availabilityStatus: AvailabilityStatus; availabilityConfirmedAt: Date | null; availabilityExpiresAt: Date | null;
   lastSyncStatus: string; lastSyncAttemptAt: Date | null;
 };
 
@@ -37,7 +37,7 @@ export type AdminPropertyDetails = AdminPropertySummary & {
   rawCategory: string | null; privateArea: string | null; totalArea: string | null;
   bedrooms: number | null; suites: number | null; parkingSpaces: number | null;
   characteristics: unknown; infrastructure: unknown; sourcePurpose: string | null; sourceUpdatedAt: Date | null;
-  availabilityConfirmedAt: Date | null; availabilityConfirmedBy: string | null;
+  availabilityConfirmedBy: string | null;
   lastSyncError: string | null; collections: { slug: string; name: string }[];
   publicationStatus: PropertyPublicationStatus;
 };

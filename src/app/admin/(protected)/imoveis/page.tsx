@@ -2,23 +2,26 @@ import { requirePagePermission } from "@/features/access/server";
 import Link from "next/link";
 import { Plus, Search } from "lucide-react";
 import { PropertyTable } from "@/components/admin/property-table";
+import { SyncAllPropertiesButton } from "@/components/admin/sync-all-properties-button";
 import { getAuthorizedAdminPropertyService } from "@/features/admin/properties/admin-property-service-factory";
 import type { AdminPropertyFilters } from "@/features/admin/properties/types";
+import { hasPermission } from "@/features/access/permissions";
 
 export const metadata = { title: "Imóveis administrativos" };
+export const maxDuration = 300;
 
 export default async function AdminPropertiesPage({ searchParams }: { searchParams: Promise<Record<string,string|undefined>> }) {
-  await requirePagePermission("properties:read");
+  const admin = await requirePagePermission("properties:read");
   const query = await searchParams;
   const filters: AdminPropertyFilters = {
     search: query.busca?.slice(0,100), neighborhood: query.bairro?.slice(0,160),
-    publication: option(query.publicacao,["PUBLISHED","DRAFT"]), availability: option(query.disponibilidade,["AVAILABLE","UNAVAILABLE","UNKNOWN","EXPIRED"]),
+    publication: option(query.publicacao,["PUBLISHED","DRAFT"]), availability: option(query.disponibilidade,["AVAILABLE","UNAVAILABLE","UNKNOWN"]),
     syncStatus: option(query.sincronizacao,["NEVER","SUCCESS","FAILED"]), sort: option(query.ordem,["newest","code","title","last-sync"])??"newest",
     page: positive(query.pagina,1), pageSize: 15,
   };
   const data = await (await getAuthorizedAdminPropertyService("properties:read")).list(filters);
-  return <div className="mx-auto max-w-[1500px] space-y-6"><div className="flex flex-wrap items-end justify-between gap-4"><div><h2 className="text-2xl font-semibold">Imóveis</h2><p className="mt-1 text-sm text-[#746c67]">{data.total} imóvel(is) selecionado(s)</p></div><Link href="/admin/imoveis/novo" className="flex items-center gap-2 rounded-lg bg-[#66142e] px-4 py-2.5 text-sm font-semibold text-white"><Plus size={17}/> Importar imóvel</Link></div>
-    <form className="grid gap-3 rounded-xl border border-[#ded5cd] bg-white p-4 sm:grid-cols-2 xl:grid-cols-6"><label className="xl:col-span-2"><span className="text-xs text-[#746c67]">Código ou título</span><span className="relative mt-1 block"><Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8a817b]"/><input name="busca" defaultValue={query.busca} className="h-10 w-full rounded-lg border border-[#d8ccc3] pl-9 pr-3 text-sm"/></span></label><Filter name="bairro" label="Bairro" value={query.bairro}/><Select name="publicacao" label="Publicação" value={query.publicacao} options={[["","Todas"],["PUBLISHED","Aprovados"],["DRAFT","Rascunhos"]]}/><Select name="disponibilidade" label="Disponibilidade" value={query.disponibilidade} options={[["","Todas"],["AVAILABLE","Disponível"],["UNKNOWN","Desconhecida"],["EXPIRED","Expirada"],["UNAVAILABLE","Indisponível"]]}/><Select name="sincronizacao" label="Sincronização" value={query.sincronizacao} options={[["","Todas"],["SUCCESS","Sucesso"],["FAILED","Erro"],["NEVER","Nunca"]]}/><div className="flex items-end gap-2 xl:col-start-6"><button className="h-10 flex-1 rounded-lg bg-[#302724] px-4 text-sm font-semibold text-white">Filtrar</button><Link href="/admin/imoveis" className="grid h-10 place-items-center rounded-lg border border-[#d8ccc3] px-3 text-sm">Limpar</Link></div></form>
+  return <div className="mx-auto max-w-[1500px] space-y-6"><div className="flex flex-wrap items-end justify-between gap-4"><div><h2 className="text-2xl font-semibold">Imóveis</h2><p className="mt-1 text-sm text-[#746c67]">{data.total} imóvel(is) selecionado(s)</p></div><div className="flex flex-wrap items-start gap-2">{hasPermission(admin,"properties:sync")&&<SyncAllPropertiesButton total={data.total}/>}<Link href="/admin/imoveis/novo" className="flex items-center gap-2 rounded-lg bg-[#66142e] px-4 py-2.5 text-sm font-semibold text-white"><Plus size={17}/> Importar imóvel</Link></div></div>
+    <form className="grid gap-3 rounded-xl border border-[#ded5cd] bg-white p-4 sm:grid-cols-2 xl:grid-cols-6"><label className="xl:col-span-2"><span className="text-xs text-[#746c67]">Código ou título</span><span className="relative mt-1 block"><Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8a817b]"/><input name="busca" defaultValue={query.busca} className="h-10 w-full rounded-lg border border-[#d8ccc3] pl-9 pr-3 text-sm"/></span></label><Filter name="bairro" label="Bairro" value={query.bairro}/><Select name="publicacao" label="Publicação" value={query.publicacao} options={[["","Todas"],["PUBLISHED","Aprovados"],["DRAFT","Rascunhos"]]}/><Select name="disponibilidade" label="Disponibilidade" value={query.disponibilidade} options={[["","Todas"],["AVAILABLE","Disponível no Vista"],["UNKNOWN","Não informada pelo Vista"],["UNAVAILABLE","Indisponível"]]}/><Select name="sincronizacao" label="Sincronização" value={query.sincronizacao} options={[["","Todas"],["SUCCESS","Sucesso"],["FAILED","Erro"],["NEVER","Nunca"]]}/><div className="flex items-end gap-2 xl:col-start-6"><button className="h-10 flex-1 rounded-lg bg-[#302724] px-4 text-sm font-semibold text-white">Filtrar</button><Link href="/admin/imoveis" className="grid h-10 place-items-center rounded-lg border border-[#d8ccc3] px-3 text-sm">Limpar</Link></div></form>
     <PropertyTable items={data.items}/><Pagination page={data.page} pages={data.pages} query={query}/>
   </div>;
 }

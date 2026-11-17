@@ -65,7 +65,7 @@ admin_users 1 ── 0..1 broker_profiles 1 ── 0..1 broker_sites N ── N 
 ```
 
 - Um imóvel pode aparecer em vários sites e no site institucional ao mesmo tempo.
-- **A elegibilidade pública continua central**: o site do corretor usa o mesmo `publicVisibilityConditions`. Imóvel despublicado, indisponível ou com confirmação expirada some de todos os sites. O corretor escolhe **quais** imóveis elegíveis exibir, nunca torna elegível um imóvel inelegível.
+- **A elegibilidade pública continua central**: o site do corretor usa o mesmo `publicVisibilityConditions`. Imóvel despublicado, indisponível ou com snapshot antigo some de todos os sites. O corretor escolhe **quais** imóveis elegíveis exibir, nunca torna elegível um imóvel inelegível.
 - O conteúdo comercial é somente leitura no site do corretor. Destaque e ordem são por site.
 
 ## Escopo de leads
